@@ -49,6 +49,9 @@ for e=1:length(event_types)
 end
 % note since there are precisely the same number of contact gain/loss events, the stats for them are identical
 
+%to-do: export results to csv files, either with fprint or with table
+%export (show examples of both ways)
+
 max_num_clips=1*16;
 %plot average geometries for a specific event type
 GenerateEventVideoClips(rangemin_event_frames, 'rangemin', filename, localframe, 200, max_num_clips, outputrootdir)
