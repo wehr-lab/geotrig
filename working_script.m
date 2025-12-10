@@ -22,7 +22,7 @@ rangemin_event_frames=detect_rangemin(range, metadata, localframe, filename);
 [stalk, stalk_start_frames, stalk_end_frames, stalk_durs]=detect_stalk(cricket_present, mouse_spd, cricket_spd, range, az);
 
 
-% approach ? ... not sure if I want to include jen's version
+% approach  ... not sure if I want to include jen's version?
 
 
 %plot average geometries for a specific event type
