@@ -1,10 +1,10 @@
 function [event_counts_ON, event_counts_OFF, on_pvalue, RateRatio_ON_vs_OFF] = GetEventLaserStats(event_frames, event_type, metadata, filename, verbose)
 % compute laser on/off event rate statistics using a Poisson Regression Model
-% usage: [event_counts_ON, event_counts_OFF, on_pvalue,
-% RateRatio_ON_vs_OFF] = GetEventLaserStats(event_frames, event_type, metadata, filename, verbose);
+% usage: [event_counts_ON, event_counts_OFF, on_pvalue, RateRatio_ON_vs_OFF] = GetEventLaserStats(event_frames, event_type, metadata, filename, verbose);
 % set 'verbose' to 1 to print all the statistics output, or 0 to run
 % silently and just return sign and p-value
 
+%to do: write a version of this that separates light/dark trials
 
 %use metadata to compile event and trial counts with/without laser
 event_counts_OFF = 0;
