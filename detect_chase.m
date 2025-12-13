@@ -9,6 +9,7 @@ chase_speed_thresh=10; %minimum,  cm/s
 chase_range_thresh= [5 10]; % [min max] cm
 chase_az_thresh=30; %maximum, in degrees
 chase_winsize=.5*200; %in frames (seconds*200fps)
+min_chase_dur=.5*200; %in frames (seconds*200fps)
 
 
 tic
@@ -46,8 +47,8 @@ chase_durs=chase_end_frames-chase_start_frames;
 fprintf('\nfound %d chases, min duration %d frames (mean %.0f)', length(chase_durs), min(chase_durs),  mean(chase_durs))
 
 %exclude short chases (optional)
-keepidx=find(chase_durs>=chase_winsize);
+keepidx=find(chase_durs>=min_chase_dur);
 chase_start_frames=chase_start_frames(keepidx);
 chase_end_frames=chase_end_frames(keepidx);
 chase_durs=chase_durs(keepidx);
-fprintf('\nafter excluding chases <%d frames, kept %d chases, min duration %d frames (mean %.0f)', chase_winsize, length(chase_durs),  min(chase_durs), mean(chase_durs))
+fprintf('\nafter excluding chases <%d frames, kept %d chases, min duration %d frames (mean %.0f)', min_chase_dur, length(chase_durs),  min(chase_durs), mean(chase_durs))

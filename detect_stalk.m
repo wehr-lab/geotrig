@@ -10,6 +10,7 @@ stalk_range_thresh= [5 40]; % [min max],  cm
 stalk_az_thresh=30; %min, in degrees
 stalk_cspeed_thresh=1; % cricket speed min cm/s
 stalk_winsize=1*200; %in frames (seconds*200fps)
+min_stalk_dur=1*200; %in frames (seconds*200fps)
 
 
 tic
@@ -53,8 +54,8 @@ stalk_durs=stalk_end_frames-stalk_start_frames;
 fprintf('\nfound %d stalks, min duration %d frames (mean %.0f)', length(stalk_durs), min(stalk_durs),  mean(stalk_durs))
 
 %exclude short stalks (optional)
-keepidx=find(stalk_durs>=stalk_winsize);
+keepidx=find(stalk_durs>=min_stalk_dur);
 stalk_start_frames=stalk_start_frames(keepidx);
 stalk_end_frames=stalk_end_frames(keepidx);
 stalk_durs=stalk_durs(keepidx);
-fprintf('\nafter excluding stalks <%d frames, kept %d stalks, min duration %d frames (mean %.0f)', stalk_winsize, length(stalk_durs),  min(stalk_durs), mean(stalk_durs))
+fprintf('\nafter excluding stalks <%d frames, kept %d stalks, min duration %d frames (mean %.0f)', min_stalk_dur, length(stalk_durs),  min(stalk_durs), mean(stalk_durs))

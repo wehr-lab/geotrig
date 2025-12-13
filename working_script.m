@@ -20,9 +20,16 @@ rangemin_event_frames=detect_rangemin(range, metadata, localframe, filename);
 [pause, pause_start_frames, pause_end_frames, pause_durs]=detect_pause(cricket_present, mouse_spd);
 [wander, wander_start_frames, wander_end_frames, wander_durs]=detect_wander(cricket_present, mouse_spd, range, az);
 [stalk, stalk_start_frames, stalk_end_frames, stalk_durs]=detect_stalk(cricket_present, mouse_spd, cricket_spd, range, az);
+[approach, approach_start_frames, approach_end_frames, approach_durs, first_approach_frames]=detect_approach(cricket_present, mouse_spd, az)
 
 
 % approach, intercept  ... not sure if I want to include jen's version? see /Users/wehr/Documents/Analysis/Prey-Capture/preycapture_simple.m
+    %%% define approaches
+    approach = abs(az)<30 & spd>5;
+    approach = medfilt1(approach,31); %%% removes brief periods and connects across gaps, on order of 0.5sec
+
+    approachStarts = find(diff(approach)>0)+1;
+    firstApproach = min(approachStarts); %first time point of approach
 
 
 %plot average geometries for a specific event type
@@ -97,6 +104,8 @@ outputFilePath = fullfile(outputrootdir, 'event_counts_table.csv');
 writetable(T, outputFilePath); % Export the Table to CSV, using the writetable function, which handles file opening/closing and formatting automatically
 
 %export event_frames data to a CSV that you could import into a dataframe
+%this creates a table with N rows where N = number of event types, column 1
+%is each event name, and columns 2-inf are all the event frames for that event type 
 frame_data_cell = cell(length(event_types), 1); %  Initialize a cell array to hold the frame vectors
 % Loop through the event names and pull the corresponding variable data
 for i = 1:length(event_types)

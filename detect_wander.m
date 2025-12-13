@@ -9,6 +9,7 @@ wander_speed_thresh=[5 15]; %[min max]  cm/s
 wander_range_thresh= 15; % min,  cm
 wander_az_thresh=30; %min, in degrees
 wander_winsize=1*200; %in frames (seconds*200fps)
+min_wander_dur=1*200; %in frames (seconds*200fps)
 
 
 tic
@@ -46,8 +47,8 @@ wander_durs=wander_end_frames-wander_start_frames;
 fprintf('\nfound %d wanders, min duration %d frames (mean %.0f)', length(wander_durs), min(wander_durs),  mean(wander_durs))
 
 %exclude short wanders (optional)
-keepidx=find(wander_durs>=wander_winsize);
+keepidx=find(wander_durs>=min_wander_dur);
 wander_start_frames=wander_start_frames(keepidx);
 wander_end_frames=wander_end_frames(keepidx);
 wander_durs=wander_durs(keepidx);
-fprintf('\nafter excluding wanders <%d frames, kept %d wanders, min duration %d frames (mean %.0f)', wander_winsize, length(wander_durs),  min(wander_durs), mean(wander_durs))
+fprintf('\nafter excluding wanders <%d frames, kept %d wanders, min duration %d frames (mean %.0f)', min_wander_dur, length(wander_durs),  min(wander_durs), mean(wander_durs))
