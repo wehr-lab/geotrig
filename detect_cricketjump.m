@@ -17,10 +17,12 @@ MinPeakWidth=10;
 Threshold=0;
 p_flicker_thresh=100; %peak prominence higher than this is probably a DLC glitch
 
-fprintf('\ndetecting cricket jumps... ')
+fprintf('detecting cricket jumps... \n')
 cricket_jump_event_frames=[];
 pks=[];w=[];p=[];
 region=1:length(cricket_spd); %you could make it shorter for param tuning
+%%%% kluge: (why can't MATLAB find findpeaks??
+%%cd C:\Program Files\MATLAB\R2022a\toolbox\signal\signal
 [pks_raw,cricket_jump_raw,w_raw,p_raw]  = findpeaks(cricket_spd(region), 'MinPeakProminence',MinPeakProminence, 'MinPeakDistance',MinPeakDistance, 'MinPeakHeight',MinPeakHeight, 'Threshold',Threshold, 'MinPeakWidth', MinPeakWidth);
 
 %clean jumps that are just cricket drops, or DLC glitches (p too high)
@@ -36,8 +38,8 @@ for f=cricket_jump_raw'
         end
     end
 end
-fprintf('\n%d raw cricket jump events found', length(cricket_jump_raw))
-fprintf('\n%d cleaned cricket jump events found', length(cricket_jump_event_frames))
+fprintf('%d raw cricket jump events found\n', length(cricket_jump_raw))
+fprintf('%d cleaned cricket jump events found\n', length(cricket_jump_event_frames))
 
 %note that pks, w, p are not used, but you could inspect them if you want to tweak the peakfinding params
 % pks: height of each peak

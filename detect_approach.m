@@ -22,7 +22,7 @@ approach_winsize=.5*200; %in frames (seconds*200fps)
 min_approach_dur=.25*200 %in frames (seconds*200fps)
 
 tic
-fprintf('\ndetecting approach... ')
+fprintf('detecting approach... \n')
 
 approach=zeros(size(mouse_spd)); %initialize to zero
 
@@ -37,7 +37,7 @@ approach = spd_condition & az_condition & cricket_present;
 
 approach = medfilt1(single(approach),approach_winsize); %%% removes brief periods and connects across gaps, on order of 0.5sec
 
-fprintf(' done (%.1f sec)', toc)
+fprintf(' done (%.1f sec)\n', toc)
 
 approach_start_frames=find(diff(approach)>0);
 approach_end_frames=find(diff(approach)<0);
@@ -46,7 +46,7 @@ if approach(end)==1
 end
 if length(approach_start_frames) ~= length(approach_end_frames) error('mismatched approach start/stop'), end
 approach_durs=approach_end_frames-approach_start_frames;
-fprintf('\nfound %d approachs, min duration %d frames (mean %.0f)', length(approach_durs), min(approach_durs),  mean(approach_durs))
+fprintf('found %d approachs, min duration %d frames (mean %.0f)\n', length(approach_durs), min(approach_durs),  mean(approach_durs))
 
 % get first approach frame for each trial, using cricket_present which indicates cricketdrop for each trial
 
@@ -62,4 +62,4 @@ keepidx=find(approach_durs>=min_approach_dur);
 approach_start_frames=approach_start_frames(keepidx);
 approach_end_frames=approach_end_frames(keepidx);
 approach_durs=approach_durs(keepidx);
-fprintf('\nafter excluding approachs <%d frames, kept %d approachs, min duration %d frames (mean %.0f)', min_approach_dur, length(approach_durs),  min(approach_durs), mean(approach_durs))
+fprintf('after excluding approachs <%d frames, kept %d approachs, min duration %d frames (mean %.0f)\n', min_approach_dur, length(approach_durs),  min(approach_durs), mean(approach_durs))

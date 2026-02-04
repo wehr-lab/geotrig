@@ -1,6 +1,6 @@
-function [event_counts_ON, event_counts_OFF, on_pvalue, RateRatio_ON_vs_OFF] = GetEventLaserStats(event_frames, event_type, metadata, filename, verbose)
+function [event_counts_ON, event_counts_OFF, on_pvalue, RateRatio_ON_vs_OFF, totalnumframesON, totalnumframesOFF] = GetEventLaserStats_kip01(event_frames, event_type, metadata, filename, verbose)
 % compute laser on/off event rate statistics using a Poisson Regression Model
-% usage: [event_counts_ON, event_counts_OFF, on_pvalue, RateRatio_ON_vs_OFF] = GetEventLaserStats(event_frames, event_type, metadata, filename, verbose);
+% usage: [event_counts_ON, event_counts_OFF, on_pvalue, RateRatio_ON_vs_OFF, totalnumframesON, totalnumframesOFF] = GetEventLaserStats(event_frames, event_type, metadata, filename, verbose);
 % set 'verbose' to 1 to print all the statistics output, or 0 to run
 % silently and just return sign and p-value
 
@@ -59,7 +59,7 @@ end
 %% Poisson Regression Model
 
 % 1. Define the number of trials and events for each condition.
-% I have altered this now to use the #frames for each condition
+% altered to use the #frames for each condition
 
 fprintf('modified here to use #frames/condition in the model\n')
 

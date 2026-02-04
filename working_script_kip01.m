@@ -1,13 +1,28 @@
-%example working script
-
+%example working script (from Mike)
+% working_script_kip01
 % clear
 close all
 
+% conditions to be compared
+condition1 = 10003;
+condition2 = 10013;
+
 %load geos from dataframe
-dataroot= '/Volumes/Projects/PreyCapture/ZIActivation';
-dataframefilename = 'geos_allmice_alltrials_wfames.csv';
-outputrootdir= '/Volumes/Projects/PreyCapture/ZIActivation/geo-trig-analysis-output';
-[az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe(dataroot, dataframefilename);
+dataroot= 'X:\PreyCapture\A1Suppression';
+dataframeFN = strcat('geos_condition_', num2str(condition1) ,'p0_wfames.csv');
+metadataFN = strcat('metadata_condition_', num2str(condition1) ,'p0');
+
+% optionally, enter a second dataframe (e.g. with and w/o laser) to be concatenated
+dataframeFN2 = strcat('geos_condition_', num2str(condition2) ,'p0_wfames.csv');
+metadataFN2 = strcat('metadata_condition_', num2str(condition2) ,'p0');
+
+outputrootdir= 'X:\PreyCapture\A1Suppression\geo-trig-analysis-output';
+
+if ~exist('dataframeFN2')
+    [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe_kip01(dataroot, dataframeFN, metadataFN);
+else
+    [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe_kip01(dataroot, dataframeFN, metadataFN, dataframeFN2, metadataFN2);
+end
 
 cricket_present=get_cricket_present_frames(metadata, localframe, num_geoframes, filename);
 
@@ -20,17 +35,17 @@ rangemin_event_frames=detect_rangemin(range, metadata, localframe, filename);
 [pause, pause_start_frames, pause_end_frames, pause_durs]=detect_pause(cricket_present, mouse_spd);
 [wander, wander_start_frames, wander_end_frames, wander_durs]=detect_wander(cricket_present, mouse_spd, range, az);
 [stalk, stalk_start_frames, stalk_end_frames, stalk_durs]=detect_stalk(cricket_present, mouse_spd, cricket_spd, range, az);
-[approach, approach_start_frames, approach_end_frames, approach_durs, first_approach_frames]=detect_approach(cricket_present, mouse_spd, az)
+[approach, approach_start_frames, approach_end_frames, approach_durs, first_approach_frames]=detect_approach(cricket_present, mouse_spd, az);
 
-
+if 0
 % approach, intercept  ... not sure if I want to include jen's version? see /Users/wehr/Documents/Analysis/Prey-Capture/preycapture_simple.m
     %%% define approaches
-    approach = abs(az)<30 & spd>5;
+    approach = abs(az)<30 & mouse_spd>5;
     approach = medfilt1(approach,31); %%% removes brief periods and connects across gaps, on order of 0.5sec
 
     approachStarts = find(diff(approach)>0)+1;
     firstApproach = min(approachStarts); %first time point of approach
-
+end
 
 %plot average geometries for a specific event type
 closefigs=0;
@@ -38,7 +53,10 @@ delete(fullfile(outputrootdir, 'event-avg-geo.pdf')) %optional
 plot_avg_geometries(cricket_jump_event_frames, 'cricket_jump_event_frames', mouse_spd, range, az, cricket_spd, closefigs, outputrootdir)
 
 event_types={'cricket_jump_event_frames', 'rangemin_event_frames', 'contact_gain_event_frames', 'contact_loss_event_frames','target_loss_event_frames',...
-    'chase_start_frames','pause_start_frames','pause_end_frames','wander_start_frames'}; %list of event types
+   'chase_start_frames','pause_start_frames','pause_end_frames','wander_start_frames'}; %list of event types
+
+event_typesShort={'cricket_jump_event', 'rangemin_event', 'contact_gain_event', 'contact_loss_event','target_loss_event',...
+    'chase_start','pause_start','pause_end','wander_start'}; %list of event types
 
 %plot average geometries for a whole list of event types
 for e=1:length(event_types)
@@ -47,37 +65,51 @@ for e=1:length(event_types)
 end
 
 
-%get laser statistics for a single event type
-[event_counts_ON, event_counts_OFF, pvalue, RateRatio_ON_vs_OFF] = GetEventLaserStats_kip01(rangemin_event_frames, 'rangemin', metadata, filename, 1);
+%get statistics for a single event type
+% totalnumframesON/OFF added fpr normalization
+verbose=1;
+[event_counts_ON, event_counts_OFF, pvalue, RateRatio_ON_vs_OFF, totalnumframesON, totalnumframesOFF] = GetEventLaserStats_kip02(rangemin_event_frames, 'rangemin', metadata, filename, condition1, condition2, verbose);
 
-%get laser statistics for lots of event types
-fprintf('\nLaser statistics for events')
+%get statistics for lots of event types
+fprintf('statistics for events\n')
 clear event_counts_ON event_counts_OFF
 for e=1:length(event_types)
     event_frames=eval(event_types{e});
-    [event_counts_ON(e), event_counts_OFF(e), pvalue(e), RateRatio_ON_vs_OFF(e)] = GetEventLaserStats_kip01(event_frames, event_types{e}, metadata, filename, 0);
-    fprintf('\n%s: %d ON, %d OFF, ON ratio=%.1f, p=%.3f', event_types{e}, event_counts_ON(e), event_counts_OFF(e), RateRatio_ON_vs_OFF(e), pvalue(e))
+    [event_counts_ON(e), event_counts_OFF(e), pvalue(e), RateRatio_ON_vs_OFF(e), totalnumframesON, totalnumframesOFF] = GetEventLaserStats_kip02(event_frames, event_types{e}, metadata, filename, condition1, condition2, verbose);
+    fprintf('%s: %d ON, %d OFF, ON ratio=%.1f, p=%.3f\n', event_types{e}, event_counts_ON(e), event_counts_OFF(e), RateRatio_ON_vs_OFF(e), pvalue(e))
 end
 % note since there are precisely the same number of contact gain/loss events, the stats for them are identical
 
 %bar graph of event laser statistics computed above
+% replaced event_counts_ON/OFF with normedEventsON/OFF
 figure
-b= barh([event_counts_ON; event_counts_OFF]', 'grouped');
+normedEventsON = event_counts_ON/totalnumframesON*200;
+normedEventsOFF = event_counts_OFF/totalnumframesOFF*200;
+
+b= barh([normedEventsON; normedEventsOFF]', 'grouped');
+Xlim = xlim;
+Ylim = ylim;
 set(b(1), 'FaceColor', 'c')
 set(b(2), 'FaceColor', 'k')
 yticks(1:length(event_types))
-yticklabels(event_types)
+yticklabels(event_typesShort)
+text(Xlim(2)+.01,Ylim(2)+.5,'n','fontsize',14)
+text(Xlim(2)/2,Ylim(2)*.75,['nframes=' num2str(totalnumframesOFF)],'fontsize',12)
+text(Xlim(2)/2,Ylim(2)*.7,['nframes=' num2str(totalnumframesON)],'color','blue','fontsize',12)
+
 set(gca, 'TickLabelInterpreter', 'none') %prevents _ in labels from being interpreted as a LaTex-style subscript
 for i=1:length(pvalue)
+    text(Xlim(2)+.01, i-.25, num2str(event_counts_ON(i)), 'Color', 'blue', 'fontsize', 10)
+    text(Xlim(2)+.01, i+.25, num2str(event_counts_OFF(i)), 'fontsize', 10)
     if pvalue(i)<.05 %should probably do a multiple comparisons correction here
-        text( max(event_counts_ON(i), event_counts_OFF(i))+100, i, '*', 'fontsize', 24)
+        text( max(normedEventsON(i), normedEventsOFF(i))+.01, i, '*', 'fontsize', 24)
     end
 end
-set(gcf, 'pos', [-1276 -1050  1154  2383])
+%set(gcf, 'pos', [-1276 -1050  1154  2383])
 set(gca, 'fontsize', 18)
-xlabel('event count')
-th=text(1, 1, '* p<0.05 laser effect on event rate, using Poisson regression', 'fontsize', 12)
-set(th, 'units', 'normalized', 'position', [.6 .025])
+xlabel('event count/sec')
+th=text(1, 1, '* p<0.05', 'fontsize', 12)       %condition effect on event rate, using Poisson regression
+set(th, 'units', 'normalized', 'position', [.6 -.025])
 
 %export stats to csv file using fprintf
 fid=fopen(fullfile(outputrootdir, 'event_counts.csv'), 'w');
@@ -114,7 +146,8 @@ for i = 1:length(event_types)
     frame_data_cell{i} = current_frames; % Store the entire frame vector into one cell of the cell array    
 end
 % Create the final table
-T = table(event_names, frame_data_cell, 'VariableNames', {'EventType', 'EventFrameIndices'});
+T = table(event_types, frame_data_cell, 'VariableNames', {'EventType', 'EventFrameIndices'});
+%T = table(event_names, frame_data_cell, 'VariableNames', {'EventType', 'EventFrameIndices'});
 outputFilePath = fullfile(outputrootdir, 'event_frames_table.csv');
 writetable(T, outputFilePath); % Export the Table to CSV, using the writetable function
 

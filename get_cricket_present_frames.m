@@ -6,7 +6,7 @@ function [cricket_present]=get_cricket_present_frames(metadata, localframe, num_
 % capture frame, and 0 everywhere else
 
 tic
-fprintf('\ngetting cricket-present frames... ')
+fprintf('getting cricket-present frames...\n')
 cricket_present=zeros(num_geoframes, 1);
 for i=1:height(metadata)
     cricketdrop = metadata{i, 'cricketdrop'};
@@ -17,4 +17,4 @@ for i=1:height(metadata)
     %frames that are after cricket drop and before captureframe and are on this trial
    
 end
-fprintf(' done (%.0f sec)', toc)
+fprintf(' done (%.0f sec)\n', toc)
