@@ -23,6 +23,7 @@ pks=[];w=[];p=[];
 region=1:length(cricket_spd); %you could make it shorter for param tuning
 %%%% kluge: (why can't MATLAB find findpeaks??
 %%cd C:\Program Files\MATLAB\R2022a\toolbox\signal\signal
+%[PKS,LOCS,Width,Prominence] = findpeaks
 [pks_raw,cricket_jump_raw,w_raw,p_raw]  = findpeaks(cricket_spd(region), 'MinPeakProminence',MinPeakProminence, 'MinPeakDistance',MinPeakDistance, 'MinPeakHeight',MinPeakHeight, 'Threshold',Threshold, 'MinPeakWidth', MinPeakWidth);
 
 %clean jumps that are just cricket drops, or DLC glitches (p too high)

@@ -19,9 +19,9 @@ metadataFN2 = strcat('metadata_condition_', num2str(condition2) ,'p0');
 outputrootdir= 'X:\PreyCapture\A1Suppression\geo-trig-analysis-output';
 
 if ~exist('dataframeFN2')
-    [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe_kip01(dataroot, dataframeFN, metadataFN);
+    [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata, dataframe] = geotrig_load_dataframe_kip01(dataroot, dataframeFN, metadataFN);
 else
-    [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe_kip01(dataroot, dataframeFN, metadataFN, dataframeFN2, metadataFN2);
+    [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata, dataframe] = geotrig_load_dataframe_kip01(dataroot, dataframeFN, metadataFN, dataframeFN2, metadataFN2);
 end
 
 cricket_present=get_cricket_present_frames(metadata, localframe, num_geoframes, filename);

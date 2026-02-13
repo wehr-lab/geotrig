@@ -16,15 +16,15 @@ function [approach, approach_start_frames, approach_end_frames, approach_durs, f
 
 
 % params:
-approach_speed_thresh=5; %minimum,  cm/s
-approach_az_thresh=30; %maximum, in degrees
-approach_winsize=.5*200; %in frames (seconds*200fps)
-min_approach_dur=.25*200 %in frames (seconds*200fps)
+approach_speed_thresh=5;    %minimum,  cm/s
+approach_az_thresh=30;      %maximum, in degrees
+approach_winsize=.5*200;    %in frames (seconds*200fps)
+min_approach_dur=.25*200;   %in frames (seconds*200fps)
 
 tic
 fprintf('detecting approach... \n')
 
-approach=zeros(size(mouse_spd)); %initialize to zero
+%approach=zeros(size(mouse_spd)); %initialize to zero
 
 % Speed condition
 spd_condition = mouse_spd > approach_speed_thresh;
@@ -46,7 +46,7 @@ if approach(end)==1
 end
 if length(approach_start_frames) ~= length(approach_end_frames) error('mismatched approach start/stop'), end
 approach_durs=approach_end_frames-approach_start_frames;
-fprintf('found %d approachs, min duration %d frames (mean %.0f)\n', length(approach_durs), min(approach_durs),  mean(approach_durs))
+fprintf('found %d approaches, min duration %d frames (mean %.0f)\n', length(approach_durs), min(approach_durs),  mean(approach_durs))
 
 % get first approach frame for each trial, using cricket_present which indicates cricketdrop for each trial
 
@@ -57,9 +57,9 @@ for f=cricket_drop_frames(:)'
     first_approach_frames=[first_approach_frames approach_start_frames(c)];
 end
 
-%exclude short approachs (optional)
+%exclude short approaches (optional)
 keepidx=find(approach_durs>=min_approach_dur);
 approach_start_frames=approach_start_frames(keepidx);
 approach_end_frames=approach_end_frames(keepidx);
 approach_durs=approach_durs(keepidx);
-fprintf('after excluding approachs <%d frames, kept %d approachs, min duration %d frames (mean %.0f)\n', min_approach_dur, length(approach_durs),  min(approach_durs), mean(approach_durs))
+fprintf('after excluding approaches <%d frames, kept %d approaches, min duration %d frames (mean %.0f)\n', min_approach_dur, length(approach_durs),  min(approach_durs), mean(approach_durs))

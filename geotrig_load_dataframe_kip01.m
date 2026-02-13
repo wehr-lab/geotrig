@@ -1,6 +1,6 @@
-function [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe_kip01(datapath, dataframeFN1, metadataFN1, dataframeFN2, metadataFN2);
+function [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata, dataframe] = geotrig_load_dataframe_kip01(datapath, dataframeFN1, metadataFN1, dataframeFN2, metadataFN2);
 
-% usage: [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe(datapath, dataframeFN);
+% usage: [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata, dataframe] = geotrig_load_dataframe(datapath, dataframeFN);
 % dataframeFN: name of monolithic file with all mice, all trials, all frames. For example 'geos_allmice_alltrials_wfames.csv'; 
 % loads the entire geometries dataframe
 % it's slow, could take up to a few minutes
