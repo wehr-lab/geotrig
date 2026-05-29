@@ -20,7 +20,7 @@ rangemin_event_frames=detect_rangemin(range, metadata, localframe, filename);
 [pause, pause_start_frames, pause_end_frames, pause_durs]=detect_pause(cricket_present, mouse_spd);
 [wander, wander_start_frames, wander_end_frames, wander_durs]=detect_wander(cricket_present, mouse_spd, range, az);
 [stalk, stalk_start_frames, stalk_end_frames, stalk_durs]=detect_stalk(cricket_present, mouse_spd, cricket_spd, range, az);
-[approach, approach_start_frames, approach_end_frames, approach_durs, first_approach_frames]=detect_approach(cricket_present, mouse_spd, az)
+[approach, approach_start_frames, approach_end_frames, approach_durs, first_approach_frames]=detect_approach(cricket_present, mouse_spd, az);
 
 
 % approach, intercept  ... not sure if I want to include jen's version? see /Users/wehr/Documents/Analysis/Prey-Capture/preycapture_simple.m

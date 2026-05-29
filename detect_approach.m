@@ -36,7 +36,7 @@ az_condition = az < approach_az_thresh;
 approach = spd_condition & az_condition & cricket_present;
 
 approach = medfilt1(single(approach),approach_winsize); %%% removes brief periods and connects across gaps, on order of 0.5sec
-
+approach = logical(approach);
 fprintf(' done (%.1f sec)', toc)
 
 approach_start_frames=find(diff(approach)>0);
