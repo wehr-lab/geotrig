@@ -9,7 +9,7 @@ tic
 fprintf('getting cricket-present frames...\n')
 cricket_present=zeros(num_geoframes, 1);
 for i=1:height(metadata)
-    cricketdrop = metadata{i, 'condition'};
+    cricketdrop = metadata{i, 'cricketdrop'};
     captureframe = metadata{i, 'captureframe'};
     fname=metadata{i, 'filename'};
     trialframes=find(contains(filename, fname));

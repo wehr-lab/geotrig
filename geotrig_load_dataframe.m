@@ -10,7 +10,7 @@ function [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes
 % dataframefilename = 'geos_allmice_alltrials_wfames.csv'; 
 % [az, range, localframe, cricket_spd, mouse_spd, localframe, filename, num_geoframes, metadata] = geotrig_load_dataframe(datapath, dataframefilename);
 
-fprintf('\ndetecting import opts ...')
+fprintf('\nstart time %s \n detecting import opts ...', datestr(now))
 cd(datapath)
 
 % % it requires a bunch of opts specifications to read correctly
@@ -28,9 +28,10 @@ cd(datapath)
 
 % This works if you know what the file structure is.
 fprintf('delimiting import opts ...\n')
-opts =  delimitedTextImportOptions('VariableNames', {'filename', 'localframe', 'dist', 'cricket_spd', 'mouse_spd', 'az'} ,...
-    'VariableTypes',{'char','double','double','double','double','double'}, 'DataLines', [2] ,'VariableNamesLine', [1],...
-    'Delimiter',',');
+opts =  delimitedTextImportOptions('VariableNames', ...
+    {'sessionID', 'filename', 'localframe', 'dist', 'cricket_spd', 'mouse_spd', 'az'} ,...
+    'VariableTypes',{'char','char','double','double','double','double','double'}, ...
+    'DataLines', [2] ,'VariableNamesLine', [1],'Delimiter',',');
 fprintf('done')
 
 fprintf('\nreading entire dataframe...')
@@ -42,11 +43,38 @@ metadata=readtable('metadata_alltrials.csv','Delimiter',',');
 num_geoframes=height(dataframe);
 az=dataframe.az;
 range=dataframe.dist;
-%localframe=dataframe.localframe;
 cricket_spd=dataframe.cricket_spd;
 mouse_spd=dataframe.mouse_spd;
 localframe=dataframe.localframe;
 filename=dataframe.filename;
 elapsed_time=toc;
-fprintf('done. read %d frames in %.0fs', num_geoframes, elapsed_time)
+fprintf('done. read %d frames in %.1fmin', num_geoframes, elapsed_time/60)
+keyboard
+
+%%%%%%%%%%%%%%%
+
+% 6.1.26
+% opts used to be like this, not sure why it stopped working
+% 
+% opts =  delimitedTextImportOptions('VariableNames', ...
+%     {'filename', 'localframe', 'dist', 'cricket_spd', 'mouse_spd', 'az'} ,...
+%     'VariableTypes',{'char','double','double','double','double','double'}, ...
+%     'DataLines', [2] ,'VariableNamesLine', [1],'Delimiter',',');
+% fprintf('done')
+
+% % for troubleshooting, the dataframe is so huge that it's convenient to use a small temp version
+% temp_dataframefilename='temp_geos_allmice.csv'
+% fid=fopen(dataframefilename, 'r')
+% fid2=fopen('temp_geos_allmice.csv', 'w')
+% for i=1:1000
+%     l=fgetl(fid)
+%     fprintf(fid2, '%s\n', l)
+%     l=fgetl(fid)
+%     fprintf(fid2, '%s', l)
+% end
+% fclose(fid)
+% fclose(fid2)
+
+
+
 

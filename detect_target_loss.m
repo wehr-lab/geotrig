@@ -28,6 +28,7 @@ for f=1:num_geoframes-winsize-1
         end
     end
 end
+target_loss_event_frames=target_loss_event_frames(:);
 fprintf(repmat('\b',1,nbytes));
 fprintf('%.1f%%', 100*f/num_geoframes);
 fprintf(' done (%.0f sec)', toc)
