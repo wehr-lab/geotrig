@@ -7,7 +7,7 @@
 %    fps        : frames per second (for time axis labeling)
 % =============================================================
 TPM=TPMdark;
-TPM=TPMlight;
+% TPM=TPMlight;
 fps=200;
 
 nStates = size(TPM, 1);

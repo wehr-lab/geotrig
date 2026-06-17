@@ -4,69 +4,19 @@
 N=num_geoframes;
 % 1. Create a label vector 'state_vec' (1=FastChase, 2=MedChase, ..., 6=Wander)
 
-%%filter by condition
-%for c=1:2
-
-    % if c==1
-    %     condition=laseron; condition_name='laser on';
-    % elseif c==2
-    %     condition=~laseron; condition_name='laser off';
-    % end
-    % if c==1
-    %     condition=dark; condition_name='dark';
-    % elseif c==2
-    %     condition=light; condition_name='light';
-    % end
-
-
 statenames={ ...
-    'chase1' , ...
-    'chase2' , ...
-    'chase3' , ...
+    'hot pursuit' , ...
+    'chase' , ...
+    'follow' , ...
     'stalk' , ...
     'pause' , ...
     'wander' };
 
-% states = {...
-%     chase_start_frames1(find(condition(chase_start_frames1))), ...
-%     chase_start_frames2(find(condition(chase_start_frames2))), ...
-%     chase_start_frames3(find(condition(chase_start_frames3))), ...
-%     chase_start_frames4(find(condition(chase_start_frames4))), ...
-%     stalk_start_frames(find(condition(stalk_start_frames))), ...
-%     pause_start_frames(find(condition(pause_start_frames))), ...
-%     wander_start_frames(find(condition(wander_start_frames)))};
 
-
-% states = {...
-%     chase1(find(condition(chase1))), ...
-%     chase2(find(condition(chase2))), ...
-%     chase3(find(condition(chase3))), ...
-%     chase4(find(condition(chase4))), ...
-%     stalk(find(condition(stalk))), ...
-%     pause(find(condition(pause))), ...
-%     wander(find(condition(wander)))};
-% states = {...
-%     chase1(find((chase1))), ...
-%     chase2(find((chase2))), ...
-%     chase3(find((chase3))), ...
-%     chase4(find((chase4))), ...
-%     stalk(find((stalk))), ...
-%     pause(find((pause))), ...
-%     wander(find((wander)))};
-
-
-% state_vec = NaN(N, 1);
-% state_vec(chase1(find(condition(chase1)))) = 1;
-% state_vec(chase2(find(condition(chase2)))) = 2;
-% state_vec(chase3(find(condition(chase3)))) = 3;
-% state_vec(chase4(find(condition(chase4)))) = 4;
-% state_vec(stalk(find(condition(stalk)))) = 5;
-% state_vec(pause(find(condition(pause)))) = 6;
-% state_vec(wander(find(condition(wander)))) = 7;
 state_vec = NaN(N, 1);
-state_vec(chase1) = 1;
-state_vec(chase2) = 2;
-state_vec(chase3) = 3;
+state_vec(hotpursuit) = 1;
+state_vec(chase) = 2;
+state_vec(follow) = 3;
 state_vec(stalk) = 4;
 state_vec(pause) = 5;
 state_vec(wander) = 6;
@@ -74,23 +24,24 @@ state_vec(wander) = 6;
 
 % 2. Create an event vector 'event_vec'
 
-eventnames={ ...
-    'contact_gain' , ...
-    'contact_loss' , ...
-    'rangemin' , ...
-    'cricket_jump' , ...
-    };
+
+eventnames = {'failed_approach','contact_loss','intercept','cricket_jump', 'rangemin'};
+
 
 event_vec = zeros(N, 1);
-event_vec(contact_gain_event_frames) = 1; % Let's focus on 'Lose Contact' as the Gate
+event_vec(failed_approach_event_frames) = 1; %
 event_vec(contact_loss_event_frames) = 2; %
-event_vec(rangemin_event_frames) = 3; %
+event_vec(intercept_event_frames) = 3; %
 event_vec(cricket_jump_event_frames) = 4; %
+event_vec(rangemin_event_frames) = 5; %
 
-%% test whether event affects persistence N steps ahead, using glm
-%%%%
+
+
+
+%% statistics: test whether event affects persistence N steps ahead, using glm
+
 if 0 
-for event_type=1:4
+for event_type=1:eventnames
 
     % Identify frames where 'Lose Contact' happened during a chase
     %    chase_states = [1, 2, 3]; % Fast, Med, Slow
@@ -200,8 +151,9 @@ title('Effect of Lighting and Laser on Mouse Persistence');
 
 end 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% plot effect of event on persistence
-%%%%
+
 
 mean_persistence = nan(length(eventnames), length(window)); % 0 for reset, 1 for persist
 mean_persistence_dark_laserON=mean_persistence;
@@ -211,10 +163,19 @@ mean_persistence_light_laserOFF=mean_persistence;
 win_start=-1; %in seconds
 win_stop=5;%in seconds
 window=win_start*200:win_stop*200;
- chase_states = [1, 2, 3]; % Fast, Med, Slow
-%chase_states = [4:6]; % search
+chase_states = [1, 2, 3]; % Fast, Med, Slow
+search_states = [4, 5, 6]; % search
 
-for event_type=1:4
+init_states=chase_states; %condition on event occurring in one of these states
+init_states_label='chase';
+persist_states=chase_states; %define persistence as being in one of these states
+persist_states_label='chase';
+% init_states=search_states; %condition on event occurring in one of these states
+% init_states_label='search';
+% persist_states=search_states; %define persistence as being in one of these states
+% persist_states_label='search';
+
+for event_type=1:length(eventnames)
 
     % Identify frames where 'Lose Contact' happened during a chase
     event_indices = find(event_vec == event_type);
@@ -230,19 +191,19 @@ for event_type=1:4
     cond_list = {};
     for i = 1:length(event_indices)
         idx = event_indices(i);
-        if ismember(state_vec(idx), chase_states)
+        if ismember(state_vec(idx), init_states)
 
-            persistence(i, 1:length(window))= ismember(state_vec(idx+window), chase_states);
+            persistence(i, 1:length(window))= ismember(state_vec(idx+window), persist_states);
 
             % Grab the condition at that frame
             if dark(idx) & laseron(idx)
-                persistence_dark_laserON(size(persistence_dark_laserON, 1)+1, 1:length(window))= ismember(state_vec(idx+window), chase_states);
+                persistence_dark_laserON(size(persistence_dark_laserON, 1)+1, 1:length(window))= ismember(state_vec(idx+window), persist_states);
             elseif dark(idx) & ~laseron(idx)
-                persistence_dark_laserOFF(size(persistence_dark_laserOFF, 1)+1, 1:length(window))= ismember(state_vec(idx+window), chase_states);
+                persistence_dark_laserOFF(size(persistence_dark_laserOFF, 1)+1, 1:length(window))= ismember(state_vec(idx+window), persist_states);
             elseif light(idx) & laseron(idx)
-                persistence_light_laserON(size(persistence_light_laserON, 1)+1, 1:length(window))= ismember(state_vec(idx+window), chase_states);
+                persistence_light_laserON(size(persistence_light_laserON, 1)+1, 1:length(window))= ismember(state_vec(idx+window), persist_states);
             elseif light(idx) & ~laseron(idx)
-                persistence_light_laserOFF(size(persistence_light_laserOFF, 1)+1, 1:length(window))= ismember(state_vec(idx+window), chase_states);
+                persistence_light_laserOFF(size(persistence_light_laserOFF, 1)+1, 1:length(window))= ismember(state_vec(idx+window), persist_states);
             end
 
         end
@@ -254,22 +215,18 @@ for event_type=1:4
     mean_persistence_light_laserON(event_type, :)=smooth(nanmean(persistence_light_laserON), 100);
     mean_persistence_light_laserOFF(event_type, :)=smooth(nanmean(persistence_light_laserOFF), 100);
 end
-% 
-% if c==1
-%     mean_persistence1=mean_persistence;
-% elseif c==2
-%     mean_persistence2=mean_persistence;
-% end
+
+
 
 figure
 plot(window/200, mean_persistence,  'linew', 2)
 xticks(win_start:win_stop)
 grid on
-xlabel('time relative to event')
-ylabel('persistence in chase')
+xlabel(['time relative to event in ', init_states_label])
+ylabel(['persistence in ', persist_states_label])
 legend(eventnames, 'interpreter', 'none')
 set(gca, 'fontsize', 18)
-title(sprintf('Persistence in chase, all conditions'))
+title(sprintf('Persistence in %s, all conditions', persist_states_label))
 
 
 figure
@@ -280,41 +237,41 @@ nexttile
 plot(window/200, mean_persistence_dark_laserON,  'linew', 2)
 xticks(win_start:win_stop)
 grid on
-xlabel('time relative to event')
-ylabel('persistence in chase')
+xlabel(['time relative to event in ', init_states_label])
+ylabel(['persistence in ', persist_states_label])
 legend(eventnames, 'interpreter', 'none')
 set(gca, 'fontsize', 18)
-title(sprintf('Persistence in chase, dark_laserON'), 'interpreter', 'none')
+title(sprintf('Persistence in %s, dark_laserON', persist_states_label), 'interpreter', 'none')
 
 nexttile
 plot(window/200, mean_persistence_dark_laserOFF,  'linew', 2)
 xticks(win_start:win_stop)
 grid on
-xlabel('time relative to event')
-ylabel('persistence in chase')
+xlabel(['time relative to event in ', init_states_label])
+ylabel(['persistence in ', persist_states_label])
 legend(eventnames, 'interpreter', 'none')
 set(gca, 'fontsize', 18)
-title(sprintf('Persistence in chase, dark_laserOFF'), 'interpreter', 'none')
+title(sprintf('Persistence in %s, dark_laserOFF', persist_states_label), 'interpreter', 'none')
 
 nexttile
 plot(window/200, mean_persistence_light_laserON,  'linew', 2)
 xticks(win_start:win_stop)
 grid on
-xlabel('time relative to event')
-ylabel('persistence in chase')
+xlabel(['time relative to event in ', init_states_label])
+ylabel(['persistence in ', persist_states_label])
 legend(eventnames, 'interpreter', 'none')
 set(gca, 'fontsize', 18)
-title(sprintf('Persistence in chase, light_laserON'), 'interpreter', 'none')
+title(sprintf('Persistence in %s, light_laserON', persist_states_label), 'interpreter', 'none')
 
 nexttile
 plot(window/200, mean_persistence_light_laserOFF,  'linew', 2)
 xticks(win_start:win_stop)
 grid on
-xlabel('time relative to event')
-ylabel('persistence in chase')
+xlabel(['time relative to event in ', init_states_label])
+ylabel(['persistence in ', persist_states_label])
 legend(eventnames, 'interpreter', 'none')
 set(gca, 'fontsize', 18)
-title(sprintf('Persistence in chase, light_laserOFF'), 'interpreter', 'none')
+title(sprintf('Persistence in %s, light_laserOFF', persist_states_label), 'interpreter', 'none')
 
 
 %%%%%%%%%%
@@ -330,43 +287,43 @@ nexttile
 plot(window/200, mean_persistence_dark_laserON-mean_persistence_dark_laserOFF,  'linew', 2)
 xticks(win_start:win_stop)
 grid on
-xlabel('time relative to event')
-ylabel('difference persistence in chase')
+xlabel(['time relative to event in ', init_states_label])
+ylabel(['difference persistence in ', persist_states_label])
 legend(eventnames, 'interpreter', 'none')
 set(gca, 'fontsize', 18)
-title(sprintf('Persistence in chase, dark_laserON-dark_laserOFF'), 'interpreter', 'none')
+title(sprintf('Persistence in %s, dark_laserON-dark_laserOFF', persist_states_label), 'interpreter', 'none')
 ylim(yl)
 
 nexttile
 plot(window/200, mean_persistence_light_laserON-mean_persistence_light_laserOFF,  'linew', 2)
 xticks(win_start:win_stop)
 grid on
-xlabel('time relative to event')
-ylabel('difference persistence in chase')
+xlabel(['time relative to event in ', init_states_label])
+ylabel(['difference persistence in ', persist_states_label])
 legend(eventnames, 'interpreter', 'none')
 set(gca, 'fontsize', 18)
-title(sprintf('Persistence in chase, light_laserON-light_laserOFF'), 'interpreter', 'none')
+title(sprintf('Persistence in %s, light_laserON-light_laserOFF', persist_states_label), 'interpreter', 'none')
 ylim(yl)
 
 nexttile
 plot(window/200, mean_persistence_dark_laserOFF-mean_persistence_light_laserOFF,  'linew', 2)
 xticks(win_start:win_stop)
 grid on
-xlabel('time relative to event')
-ylabel('difference persistence in chase')
+xlabel(['time relative to event in ', init_states_label])
+ylabel(['difference persistence in ', persist_states_label])
 legend(eventnames, 'interpreter', 'none')
 set(gca, 'fontsize', 18)
-title(sprintf('Persistence in chase, dark_laserOFF-light_laserOFF'), 'interpreter', 'none')
+title(sprintf('Persistence in %s, dark_laserOFF-light_laserOFF', persist_states_label), 'interpreter', 'none')
 ylim(yl)
 
 nexttile
 plot(window/200, mean_persistence_dark_laserON-mean_persistence_light_laserON,  'linew', 2)
 xticks(win_start:win_stop)
 grid on
-xlabel('time relative to event')
-ylabel('difference persistence in chase')
+xlabel(['time relative to event in ', init_states_label])
+ylabel(['difference persistence in ', persist_states_label])
 legend(eventnames, 'interpreter', 'none')
 set(gca, 'fontsize', 18)
-title(sprintf('Persistence in chase, dark_laserON-light_laserON'), 'interpreter', 'none')
+title(sprintf('Persistence in %s, dark_laserON-light_laserON', persist_states_label), 'interpreter', 'none')
 ylim(yl)
 

@@ -1,5 +1,8 @@
 % Event_conditioned_TPMs
 
+% maybe replace rangemin with intercept, or at least rename it
+% add escape?
+
 % 1. Event-conditioned TPMs (stratification)
 % 
 % Split transitions into two pools — those occurring within some window
@@ -10,32 +13,29 @@
 % first pass to establish whether events matter before building anything
 % fancier.
 
-% statenames = {'chase1','chase2','chase3','chase4','stalk','pause','wander'};
 statenames = {'hot pursuit','chase','following','stalk','wander','pause'};
-eventnames = {'contact_gain','contact_loss','rangemin','cricket_jump'};
+eventnames = {'failed_approach','contact_loss','intercept','cricket_jump', 'rangemin'};
 
 nStates = numel(statenames);
 nEvents = numel(eventnames);
 
 % --- Inputs expected ---
 % stateMask : [num_frames x nStates] logical, mutually exclusive (post-refinement)
+% stateMask(t,i) = true if state i is active at time t
 % eventFrames : cell array, eventFrames{e} = list of frame indices for event e
 % fps : frame rate (for converting window to frames), or just set winFrames directly
 
-% stateMask: [nSamples x nStates] logical matrix, one column per state
-% stateMask(t,i) = true if state i is active at time t
-
-%stateMask = [    chase1(:),chase2(:),chase3(:),chase4(:),...
 stateMask = [    hotpursuit(:),chase(:),follow(:),...
     stalk(:), wander(:), pause(:)];
 size(stateMask)
 fps=200;
 
 eventFrames={...
-    contact_gain_event_frames,...
+    failed_approach_event_frames,...
     contact_loss_event_frames,...
-    rangemin_event_frames,...
+    intercept_event_frames, ...
     cricket_jump_event_frames,...
+    rangemin_event_frames,...
     };
 
 % --- Parameters ---
@@ -104,7 +104,7 @@ end
 %% Visualization: difference matrices (TPM_post - TPM_baseline) per event
 figure('Position',[100 100 1600 800]);
 for e = 1:nEvents
-    subplot(2,2,e)
+    subplot(2,3,e)
     diffMat = results(e).TPM_post - results(e).TPM_baseline_excl;
     imagesc(diffMat, [-1 1]*max(abs(diffMat(:)),[],'all','omitnan'));
     colormap(gca, redblue());
@@ -148,7 +148,7 @@ end
 %% circle diagram of difference TPMs
 figure('Position',[100 100 1600 1000]);
 for e = 1:nEvents
-    subplot(2,2,e)
+    subplot(2,3,e)
     diffMat = results(e).TPM_post - results(e).TPM_baseline_excl;
     plot_tpm_diff_circle(diffMat, statenames, ...
         'Title', sprintf('%s (n=%d)', eventnames{e}, results(e).n_post_transitions), ...

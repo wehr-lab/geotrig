@@ -1,7 +1,7 @@
 % plotTPM
 
-%% load geos from dataframe
 if 0
+    %% load geos from dataframe
     dataroot= '/Volumes/Projects/PreyCapture/ZIActivation';
     dataframefilename = 'geos_allmice_alltrials_wfames.csv';
     outputrootdir= '/Volumes/Projects/PreyCapture/ZIActivation/geo-trig-analysis-output';
@@ -21,142 +21,75 @@ if 0
     rangemin_event_frames=detect_rangemin(range, metadata, localframe, filename);
     [contact, contact_gain_event_frames, contact_loss_event_frames]=detect_contact(range, cricket_present);
     [target_loss_event_frames]=detect_target_loss(range, az, contact, metadata, localframe, num_geoframes, filename);
-    %[pause, pause_start_frames, pause_end_frames, pause_durs]=detect_pause(cricket_present, mouse_spd);
     [pause, pause_start_frames, pause_end_frames, pause_durs]=detect_pause(cricket_present, mouse_spd, metadata, filename, localframe);
 
     [wander, wander_start_frames, wander_end_frames, wander_durs]=detect_wander(cricket_present, mouse_spd, range, az);
     [stalk, stalk_start_frames, stalk_end_frames, stalk_durs]=detect_stalk(cricket_present, mouse_spd, cricket_spd, range, az);
     [approach, approach_start_frames, approach_end_frames, approach_durs, first_approach_frames]=detect_approach(cricket_present, mouse_spd, az);
-
+    failed_approach_event_frames=detect_failed_approach(approach_end_frames, range);
+    intercept_event_frames=detect_intercepts(approach_end_frames, range);
 end
 
 
 
 
+% detect chase states by passing thresholds to detect_varchase
 
-%% detect battery of chase states
+azvalues=[0 30];
+rangevalues = [5 20];
+speedvalues_hotpursuit = [30 50];
+speedvalues_chase = [20 30];
+speedvalues_follow = [5 20];
 
-% %slow & far
-% chase_speed_thresh1=[5 10]; %minimum,  cm/s
-% chase_range_thresh1= [20 30]; % [min max] cm
-% chase_az_thresh1=[30 45] ; %maximum, in degrees
-%
-% %medium
-% chase_speed_thresh2=[10 30]; %minimum,  cm/s
-% chase_range_thresh2= [10 20]; % [min max] cm
-% chase_az_thresh2=[20 30] ; %maximum, in degrees
-%
-% %fast & and close
-% chase_speed_thresh3=[30 100]; %minimum,  cm/s
-% chase_range_thresh3= [0 10]; % [min max] cm
-% chase_az_thresh3=[0 20] ; %maximum, in degrees
-% Spacing using a power law (e.g., p=0.5 for square root spacing)
-% p = 1;
-% start_val=30;
-% end_val=0;
-n=3;
-%azvalues = linspace(start_val^p, end_val^p, n+1) .^ (1/p);
-azvalues=[30 0];
-% p=.75;
-% start_val=1;
-% end_val=50;
-%speedvalues = linspace(start_val^p, end_val^p, n+1) .^ (1/p);
-%speedvalues = [ 5 10 20 30 50];
-speedvalues = [ 5 20 30 50];
-
-% p=1;
-% start_val=30;
-% end_val=0;
-%rangevalues = linspace(start_val^p, end_val^p, n+1) .^ (1/p);
-rangevalues = [ 20 5];
-
-for i=1:n
-    %1 = slow, far, wide
-    %n = fast, close, narrow
-
-    % chase_speed_threshname=sprintf('chase_speed_thresh%d', i);
-    % eval([chase_speed_threshname, '=[7*(i-1) 7*i];'])
-    % chase_range_threshname=sprintf('chase_range_thresh%d', i);
-    % eval([chase_range_threshname, '=[6*(10-i) 6*(11-i)];'])
-    % chase_az_threshname=sprintf('chase_az_thresh%d', i);
-    % eval([chase_az_threshname, '=[18*(10-i) 18*(11-i)];'])
-
-    chase_speed_threshname=sprintf('chase_speed_thresh%d', i);
-    eval([chase_speed_threshname, '=[speedvalues(i) speedvalues(i+1)];'])
-    % chase_range_threshname=sprintf('chase_range_thresh%d', i);
-    % eval([chase_range_threshname, '=[rangevalues(i+1) rangevalues(i)];'])
-    % chase_az_threshname=sprintf('chase_az_thresh%d', i);
-    % eval([chase_az_threshname, '=[azvalues(i+1) azvalues(i)];'])
-
-    %fix az = wide open
-    chase_az_threshname=sprintf('chase_az_thresh%d', i);
-    eval([chase_az_threshname, '=[azvalues(end) azvalues(1)];'])
-    %fix range = wide open
-    chase_range_threshname=sprintf('chase_range_thresh%d', i);
-    eval([chase_range_threshname, '=[rangevalues(end) rangevalues(1)];'])
-    %fix range -> 2 windows
-     % if i==1 | i==2
-     %     chase_range_threshname=sprintf('chase_range_thresh%d', i);
-     %     eval([chase_range_threshname, '=[rangevalues(end-1) rangevalues(1)];'])
-     % end
-
-    fprintf('\nspeed %2d: %2.1f- %2.1f\t range: %2.1f- %2.1f\t az: %2.1f- %2.1f', i, eval(chase_speed_threshname), eval(chase_range_threshname), eval(chase_az_threshname))
-
-end
+[hotpursuit, hotpursuit_start_frames, hotpursuit_end_frames, hotpursuit_durs]=detect_varchase(...
+    cricket_present, mouse_spd, range, az, speedvalues_hotpursuit, rangevalues, azvalues);
+[chase, chase_start_frames, chase_end_frames, chase_durs]=detect_varchase(...
+    cricket_present, mouse_spd, range, az, speedvalues_chase, rangevalues, azvalues);
+[follow, follow_start_frames, follow_end_frames, follow_durs]=detect_varchase(...
+    cricket_present, mouse_spd, range, az, speedvalues_follow, rangevalues, azvalues);
 
 
 
-for i=1:n
-    str=sprintf('[chase%d, chase_start_frames%d, chase_end_frames%d, chase_durs%d]=detect_varchase(cricket_present, mouse_spd, range, az, chase_speed_thresh%d, chase_range_thresh%d, chase_az_thresh%d);', i, i, i, i, i, i, i);
-    eval(str)
-end
 
-%% enforce chase wins for all overlaps with stalk/wander
-chase1_overlaps = chase1 & (stalk | wander);
-chase2_overlaps = chase2 & (stalk | wander) ;
-chase3_overlaps = chase3 & (stalk | wander) ;
-% chase4_overlaps = chase4 & (stalk | wander) ;
-fprintf('\nfound %d overlap frames between chase1 and stalk/wander (%.0f%% of chase1 frames)', sum(chase1_overlaps), 100*sum(chase1_overlaps)/sum(chase1))
-fprintf('\nfound %d overlap frames between chase2 and stalk/wander (%.0f%% of chase2 frames)', sum(chase2_overlaps), 100*sum(chase2_overlaps)/sum(chase2))
-fprintf('\nfound %d overlap frames between chase3 and stalk/wander (%.0f%% of chase3 frames)', sum(chase3_overlaps), 100*sum(chase3_overlaps)/sum(chase1))
-% fprintf('\nfound %d overlap frames between chase4 and stalk/wander (%.0f%% of chase4 frames)', sum(chase4_overlaps), 100*sum(chase4_overlaps)/sum(chase2))
-stalk(chase1_overlaps)=0;
-stalk(chase2_overlaps)=0;
-stalk(chase3_overlaps)=0;
-% stalk(chase4_overlaps)=0;
-wander(chase1_overlaps)=0;
-wander(chase2_overlaps)=0;
-wander(chase3_overlaps)=0;
-% wander(chase4_overlaps)=0;
-fprintf('\nremoved all overlapping chase/stalk frames, they are now exclusively chase') 
+%% enforce hotpursuit/chase/follow wins for all overlaps with stalk/wander
+hotpursuit_overlaps = hotpursuit & (stalk | wander);
+chase_overlaps = chase & (stalk | wander) ;
+follow_overlaps = follow & (stalk | wander) ;
+fprintf('\nfound %d overlap frames between hotpursuit and stalk/wander (%.0f%% of hotpursuit frames)', sum(hotpursuit_overlaps), 100*sum(hotpursuit_overlaps)/sum(hotpursuit))
+fprintf('\nfound %d overlap frames between chase and stalk/wander (%.0f%% of chase frames)', sum(chase_overlaps), 100*sum(chase_overlaps)/sum(chase))
+fprintf('\nfound %d overlap frames between follow and stalk/wander (%.0f%% of follow frames)', sum(follow_overlaps), 100*sum(follow_overlaps)/sum(follow))
+stalk(hotpursuit_overlaps)=0;
+stalk(chase_overlaps)=0;
+stalk(follow_overlaps)=0;
+wander(hotpursuit_overlaps)=0;
+wander(chase_overlaps)=0;
+wander(follow_overlaps)=0;
+fprintf('\nremoved all overlapping hotpursuit/chase/follow and wander/stalk frames, they are now exclusively hotpursuit/chase/follow')
 
 % enforce stalk wins for overlaps with wander
 stalk_wander_overlaps = wander & stalk ;
 fprintf('\nfound %d overlap frames between wander and stalk (%.0f%% of wander frames, %.0f%% of stalk frames)', sum(stalk_wander_overlaps), 100*sum(stalk_wander_overlaps)/sum(wander), 100*sum(stalk_wander_overlaps)/sum(stalk))
 wander(stalk_wander_overlaps)=0;
-fprintf('\nremoved all overlapping wander frames, they are now exclusively stalk') 
+fprintf('\nremoved all overlapping wander frames, they are now exclusively stalk')
 
-% enforce pause wins for all overlaps  
+% enforce pause wins for all overlaps
 pause_overlaps = pause & (stalk | wander) ;
 fprintf('\nfound %d overlap frames between pause and wander OR stalk (%.0f%% of pause frames, %.0f%% of wander frames, %.0f%% of stalk frames)', sum(pause_overlaps), 100*sum(pause_overlaps)/sum(pause),  100*sum(pause_overlaps)/sum(wander), 100*sum(pause_overlaps)/sum(stalk))
 wander(pause_overlaps)=0;
 stalk(pause_overlaps)=0;
-fprintf('\nremoved all overlapping stalk/wander frames, they are now exclusively pause') 
+fprintf('\nremoved all overlapping stalk/wander frames, they are now exclusively pause')
 
-pause_overlaps = pause & (chase1 | chase2 | chase3 | chase4) ;
-fprintf('\nfound %d overlap frames between pause and chase1,2,3,4 (%.0f%% of pause frames)', sum(pause_overlaps), 100*sum(pause_overlaps)/sum(pause))
-chase1(pause_overlaps)=0;
-chase2(pause_overlaps)=0;
-chase3(pause_overlaps)=0;
-% chase4(pause_overlaps)=0;
-fprintf('\nremoved all overlapping chase frames, they are now exclusively pause') 
+pause_overlaps = pause & (hotpursuit | chase | follow ) ;
+fprintf('\nfound %d overlap frames between pause and hotpursuit/chase/follow (%.0f%% of pause frames)', sum(pause_overlaps), 100*sum(pause_overlaps)/sum(pause))
+hotpursuit(pause_overlaps)=0;
+chase(pause_overlaps)=0;
+follow(pause_overlaps)=0;
+fprintf('\nremoved all overlapping hotpursuit/chase/follow frames, they are now exclusively pause')
 
 %detect none of the above states
- [noneoftheabove, noneoftheabove_start_frames, noneoftheabove_end_frames]=detect_noneoftheabove(chase1, chase2, chase3, pause, stalk, wander); 
+[noneoftheabove, noneoftheabove_start_frames, noneoftheabove_end_frames]=detect_noneoftheabove(hotpursuit, chase, follow, pause, stalk, wander);
 
-hotpursuit=chase3;
-chase=chase2;
-follow=chase1;
+
 
 
 %% compute and plot TPM
@@ -173,59 +106,25 @@ for c=1:2
     elseif c==2
         condition=light; condition_name='light';
     end
-    % if c==1
-    %     condition=laseron.*dark; condition_name='laseron.dark';
-    % elseif c==2
-    %     condition=~laseron.*dark; condition_name='laseroff.dark';
-    % end
+   
 
-    % %all states
-    %
-    % states = {...
-    %     approach_start_frames(find(condition(approach_start_frames))), ...
-    %     chase_start_frames1(find(condition(chase_start_frames1))), ...
-    %     chase_start_frames2(find(condition(chase_start_frames2))), ...
-    %     chase_start_frames3(find(condition(chase_start_frames3))), ...
-    %     chase_start_frames4(find(condition(chase_start_frames4))), ...
-    %     rangemin_event_frames(find(condition(rangemin_event_frames))), ...
-    %     contact_gain_event_frames(find(condition(contact_gain_event_frames))), ...
-    %     cricket_jump_event_frames(find(condition(cricket_jump_event_frames))), ...
-    %     stalk_start_frames(find(condition(stalk_start_frames))), ...
-    %     pause_start_frames(find(condition(pause_start_frames))), ...
-    %     target_loss_event_frames(find(condition(target_loss_event_frames))), ...
-    %     wander_start_frames(find(condition(wander_start_frames)))};
-    % 
-    % statenames={ ...
-    %     'approach', ...
-    %     'chase1' , ...
-    %     'chase2' , ...
-    %     'chase3' , ...
-    %     'chase4' , ...
-    %     'rangemin' , ...
-    %     'contact' , ...
-    %     'cricket jump' , ...
-    %     'stalk' , ...
-    %     'pause' , ...
-    %     'target loss' , ...
-    %     'wander' };
+   
 
-    % Subset of hand-picked States: Chase, approach, Pause, Wander, stalk
     states = {...
-        chase_start_frames3(find(condition(chase_start_frames3))), ...
-        chase_start_frames2(find(condition(chase_start_frames2))), ...
-        chase_start_frames1(find(condition(chase_start_frames1))), ...
-        ...%chase_start_frames4(find(condition(chase_start_frames4))), ...
+        hotpursuit_start_frames(find(condition(hotpursuit_start_frames))), ...
+        chase_start_frames(find(condition(chase_start_frames))), ...
+        follow_start_frames(find(condition(follow_start_frames))), ...
         stalk_start_frames(find(condition(stalk_start_frames))), ...
         wander_start_frames(find(condition(wander_start_frames))), ...
         pause_start_frames(find(condition(pause_start_frames))), ...
         noneoftheabove_start_frames(find(condition(noneoftheabove_start_frames)))};
+  
     num_states = length(states); % Chase, Pause, Wander, etc.
 
     statenames={ ...
         'hot pursuit' , ...
         'chase' , ...
         'following' , ...
-        ...%'chase4' , ...
         'stalk' , ...
         'wander' , ...
         'pause' , ...
@@ -246,7 +145,7 @@ for c=1:2
     state_sequence = all_events(idx, 2);
 
     %optional: eliminate Self-Transitions
-    state_sequence(diff(state_sequence) ~= 0);
+    % state_sequence = state_sequence(diff([0; state_sequence]) ~= 0);
 
     T = zeros(num_states, num_states); % The raw count matrix
 
@@ -268,7 +167,7 @@ for c=1:2
     % if you want to ensure the matrix is fully defined for sparse datasets.
     % T = T + 0.01;
 
-    %exclude none state from further consideration
+    %exclude noneoftheabove state from further consideration
     keepidx=setdiff(1:num_states, noneIdx);
     T=T(keepidx, keepidx);
     statenames=statenames(keepidx);
@@ -317,19 +216,7 @@ for c=1:2
     set(gca, 'fontsize', 14)
     hTPM.Colormap=hot;
 
-    %clustergram is pretty cool, but the object handles are complex and it's
-    %very quirky to customize, you have to find lots of hidden handles
-    %cgo=clustergram(TPM)
-    %set(cgo,'RowLabels',statenames,'ColumnLabels',statenames)
-    %xlabel('To State') %hard to do
-    %ylabel('From State')
-    %fig = findall(0, 'Type', 'Figure', 'Tag', 'Clustergram');
-    % The main heatmap axes have the tag 'HeatMapAxes'
-    %ax = findall(fig, 'Type', 'Axes', 'Tag', 'HeatMapAxes');
-    % 3. Modify the FontSize directly on the axes
-    %set(ax, 'FontSize', 14);
-
- % bar graph of counts of each state
+    % bar graph of counts of each state
     clear statecounts
     for i = 1:num_states % For each state
         starts = states{i};
@@ -340,8 +227,9 @@ for c=1:2
     ylabel('state counts')
     title(condition_name)
 
-    condition_names{c}=condition_name;
 
+    %save results for plotting differences later, outside the loop
+    condition_names{c}=condition_name;
     if c==1
         orderRowsdark=orderRows;
         orderColsdark=orderCols;
@@ -356,7 +244,7 @@ for c=1:2
         statecountslight=statecounts;
     end
 
-   
+
 end
 
 %% plot dark-light diff
@@ -380,19 +268,7 @@ clmax=max([clim(hTPMlight) clim(hTPMdark)]);
 clim(hTPMdark, [0 clmax])
 clim(hTPMlight, [0 clmax])
 
-% fig=figure
-%     tiledlayout(1,3, "TileSpacing","compact")
-%     set(gcf, "Position", [440 880 1300 420])
-% % nexttile
-% hTPMdark.Parent = fig;
-% hTPMdark.Layout.Tile = 1;
-% hTPMlight.Parent = fig;
-% hTPMlight.Layout.Tile = 2;
-% hTPM.Parent = fig;
-% hTPM.Layout.Tile = 3;
-% hTPM.Position = [];
-% hTPM.ActivePositionProperty = 'position';
-% shg
+
 
 %% plot tpm circle
 opts.minProb=0.1;
@@ -403,14 +279,19 @@ opts.title='light';
 plot_tpm_circle(TPMlight, statenames, opts)
 
 % plot_tpm_diff_circle(TPMdark-TPMlight, statenames, 'MinAbsDiff', 0.001);
+% this still looks very messy
 
-    % bar graph of dark-light state counts
-      
-    figure
-    diffs = statecountsdark - statecountslight;
-    b = bar(statenames, diffs);
-    b.FaceColor = 'flat';
-    b.CData = (diffs' <= 0) * [0 0 1] + (diffs' > 0) * [1 0 0];
-    ylabel('dark-light state count diffs')
-    title('dark-light')
+% bar graph of dark-light state counts
+figure
+diffs = statecountsdark - statecountslight;
+b = bar(statenames, diffs);
+b.FaceColor = 'flat';
+b.CData = (diffs' <= 0) * [0 0 1] + (diffs' > 0) * [1 0 0];
+ylabel('dark-light state count diffs')
+title('dark-light')
 
+figure
+b = bar(statenames, [ statecountsdark; statecountslight]);
+ylabel(' state counts ')
+title('dark vs light')
+legend('dark', 'light', 'location', 'northwest')
