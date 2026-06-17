@@ -30,34 +30,276 @@ rangemin_event_frames=detect_rangemin(range, metadata, localframe, filename);
 Azimuthedges=linspace(0, 180, 50);
 % Rangeedges=linspace(0, 25, 50);
 Rangeedges=linspace(0, 60, 50);
-Speededges=linspace(0, 60, 50);
+Speededges=linspace(0, 80, 50);
 
 tiledlayout(1,3, "TileSpacing","compact")
 nexttile
-histmat=hist2(az, range, Azimuthedges, Rangeedges);
-pcolor(Azimuthedges,Rangeedges,sqrt(histmat'));
+histmat=histcounts2(az, range, Azimuthedges, Rangeedges);
+imagesc(Azimuthedges,Rangeedges,sqrt(histmat'));
 shading interp
+set(gca, 'ydir', 'norm')
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 title('all frames')
 set(gcf, "Position", [440 880 1300 420 ])
 
 nexttile
-histmat=hist2(mouse_spd, range, Speededges, Rangeedges);
-pcolor(Rangeedges,Speededges,sqrt(histmat));
+histmat=histcounts2(mouse_spd, range, Speededges, Rangeedges);
+imagesc(Rangeedges,Speededges,sqrt(histmat));
 shading interp
+set(gca, 'ydir', 'norm')
 xlabel('Range, cm')
 ylabel('Speed, cm/s')
 title('all frames')
 
 nexttile
-histmat=hist2(mouse_spd, az, Speededges, Azimuthedges);
-pcolor(Azimuthedges,Speededges,sqrt(histmat));
+% histmat=histcounts2(mouse_spd, az, Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd, az, Speededges, Azimuthedges);
+imagesc(Azimuthedges,Speededges,sqrt(histmat));
 shading interp
+set(gca, 'ydir', 'norm')
 xlabel('Azimuth, degrees')
 ylabel('Speed, cm/s')
 title('all frames')
 shg
+
+%% plot light vs dark 1-D
+histnorm='probability';
+azhistdark=histcounts(az(dark), Azimuthedges, 'norm', histnorm);
+rangehistdark=histcounts(range(dark), Rangeedges, 'norm', histnorm);
+spdhistdark=histcounts(mouse_spd(dark), Speededges, 'norm', histnorm);
+azhistlight=histcounts(az(light), Azimuthedges, 'norm', histnorm);
+rangehistlight=histcounts(range(light), Rangeedges, 'norm', histnorm);
+spdhistlight=histcounts(mouse_spd(light), Speededges, 'norm', histnorm);
+figure
+tiledlayout(2,3, "TileSpacing","compact")
+nexttile
+plot(histx(Rangeedges), rangehistdark, histx(Rangeedges), rangehistlight)
+ylabel('probability')
+xlabel('Range')
+box off
+nexttile
+plot(histx(Speededges), spdhistdark, histx(Speededges), spdhistlight)
+xlabel('Mouse Speed')
+box off
+nexttile
+plot(histx(Azimuthedges), azhistdark, histx(Azimuthedges), azhistlight)
+xlabel('Azimuth')
+legend('dark', 'light')
+box off
+xlim([0 180])
+
+
+% figure
+% tiledlayout(1,3, "TileSpacing","compact")
+nexttile
+x = histx(Rangeedges);
+y =  rangehistdark- rangehistlight;
+% 2. Split the data
+y_pos = y; y_pos(y_pos < 0) = 0; % Keep only positive values
+y_neg = y; y_neg(y_neg > 0) = 0; % Keep only negative values
+hold on;
+area(x, y_pos, 'FaceColor', 'r', 'EdgeColor', 'none', 'DisplayName', 'Positive');
+area(x, y_neg, 'FaceColor', 'b', 'EdgeColor', 'none', 'DisplayName', 'Negative');
+yline(0, 'k'); % Adds a reference line at zero
+hold off;
+xlabel('Range')
+ylabel('dark-light')
+box off
+
+nexttile
+x = histx(Speededges);
+y =  spdhistdark- spdhistlight;
+% 2. Split the data
+y_pos = y; y_pos(y_pos < 0) = 0; % Keep only positive values
+y_neg = y; y_neg(y_neg > 0) = 0; % Keep only negative values
+hold on;
+area(x, y_pos, 'FaceColor', 'r', 'EdgeColor', 'none', 'DisplayName', 'Positive');
+area(x, y_neg, 'FaceColor', 'b', 'EdgeColor', 'none', 'DisplayName', 'Negative');
+yline(0, 'k'); % Adds a reference line at zero
+xlabel('Mouse Speed')
+box off
+
+nexttile
+x = histx(Azimuthedges);
+y =  azhistdark- azhistlight;
+% 2. Split the data
+y_pos = y; y_pos(y_pos < 0) = 0; % Keep only positive values
+y_neg = y; y_neg(y_neg > 0) = 0; % Keep only negative values
+hold on;
+area(x, y_pos, 'FaceColor', 'r', 'EdgeColor', 'none', 'DisplayName', 'Positive');
+area(x, y_neg, 'FaceColor', 'b', 'EdgeColor', 'none', 'DisplayName', 'Negative');
+yline(0, 'k'); % Adds a reference line at zero
+hold off;
+xlabel('Azimuth')
+box off
+xlim([0 180])
+
+
+%% test for independence:
+
+histmatAR=histcounts2(az, range, Azimuthedges, Rangeedges);
+histmatSR=histcounts2(mouse_spd, range, Speededges, Rangeedges);
+histmatSA=histcounts2(mouse_spd, az, Speededges, Azimuthedges);
+azhist=histcounts(az, Azimuthedges);
+rangehist=histcounts(range, Rangeedges);
+spdhist=histcounts(mouse_spd, Speededges);
+
+% Compute Spearman's correlation coefficient and p-value (on underlying
+% variables, not hists)
+[rhoAR, p_valAR] = corr(az(:), range(:), 'Type', 'Spearman', 'rows', 'pairwise')
+fprintf('\nAzimuth-Range: Spearman Rho: %.4f, P-value: %.4e\n', rhoAR, p_valAR);
+[rhoSA, p_valSA] = corr(mouse_spd(:), az(:), 'Type', 'Spearman', 'rows', 'pairwise')
+fprintf('\nSpeed-Azimuth: Spearman Rho: %.4f, P-value: %.4e\n', rhoSA, p_valSA);
+[rhoSR, p_valSR] = corr(mouse_spd(:), range(:), 'Type', 'Spearman', 'rows', 'pairwise')
+fprintf('\nSpeed-Range: Spearman Rho: %.4f, P-value: %.4e\n', rhoSR, p_valSR);
+
+
+figure
+tiledlayout(3,4, "TileSpacing","compact")
+
+nexttile
+imagesc(Rangeedges, Azimuthedges,(histmatAR));
+colorbar;
+title('hist');
+xlabel('Range');
+ylabel('Azimuth');
+set(gca, 'ydir', 'norm')
+
+% 1. Calculate total samples to normalize the counts
+total_samplesAR = sum(histmatAR(:));
+
+% 2. Calculate the expected counts (product of marginals / total)
+expectedAR = (azhist(:) * rangehist(:)') / total_samplesAR;
+
+% 3. Calculate the residuals
+residualsAR = histmatAR - expectedAR;
+
+% 4. Visualize the result
+nexttile
+imagesc(Rangeedges, Azimuthedges, residualsAR);
+colorbar;
+%title('Residual Plot (Observed - Expected)');
+title(sprintf('Residual Plot (Observed - Expected)\nAzimuth-Range: Spearman Rho: %.4f, P-value: %.4e\n', rhoAR, p_valAR))
+xlabel('Range');
+ylabel('Azimuth');
+set(gca, 'ydir', 'norm')
+
+nexttile
+imagesc(Rangeedges, Azimuthedges, expectedAR);
+colorbar;
+title('Expected');
+xlabel('Range');
+ylabel('Azimuth');
+set(gca, 'ydir', 'norm')
+
+nexttile
+dependencyFactorAR = histmatAR ./ ((azhist(:) * rangehist(:)') / sum(histmatAR(:)));
+imagesc(Rangeedges, Azimuthedges, dependencyFactorAR);
+colorbar;
+clim([-1 3]); % Adjust limits to focus on the area around 1 (independence)
+set(gca, 'ydir', 'norm')
+title('Dependency Factor');
+xlabel('Range');
+ylabel('Azimuth');
+
+%%%%%
+% Speededges, Rangeedges
+
+nexttile
+imagesc(Rangeedges, Speededges,(histmatSR));
+colorbar;
+title('hist');
+xlabel('Range');
+ylabel('Speed');
+set(gca, 'ydir', 'norm')
+
+% 1. Calculate total samples to normalize the counts
+total_samplesSR = sum(histmatSR(:));
+
+% 2. Calculate the expected counts (product of marginals / total)
+expectedSR = (azhist(:) * rangehist(:)') / total_samplesSR;
+
+% 3. Calculate the residuals
+residualsSR = histmatSR - expectedSR;
+
+% 4. Visualize the result
+nexttile
+imagesc(Rangeedges, Speededges, residualsSR);
+colorbar;
+% title('Residual Plot (Observed - Expected)');
+title(sprintf('Residual Plot (Observed - Expected)\nRange-Speed: Spearman Rho: %.4f, P-value: %.4e\n', rhoSR, p_valSR))
+xlabel('Range');
+ylabel('Speed');
+set(gca, 'ydir', 'norm')
+
+nexttile
+imagesc(Rangeedges, Speededges, expectedSR);
+colorbar;
+title('Expected');
+xlabel('Range');
+ylabel('Speed');
+set(gca, 'ydir', 'norm')
+
+nexttile
+dependencyFactorSR = histmatSR ./ ((azhist(:) * rangehist(:)') / sum(histmatSR(:)));
+imagesc(Rangeedges, Speededges, dependencyFactorSR);
+colorbar;
+clim([-1 3]); % Adjust limits to focus on the area around 1 (independence)
+set(gca, 'ydir', 'norm')
+title('Dependency Factor');
+xlabel('Range');
+ylabel('Speed');
+
+%%% Azimuthedges, Speededges
+
+nexttile
+imagesc(Azimuthedges, Speededges,(histmatSA));
+colorbar;
+title('hist');
+xlabel('Azimuth');
+ylabel('Speed');
+
+set(gca, 'ydir', 'norm')
+
+% 1. Calculate total samples to normalize the counts
+total_samplesSA = sum(histmatSA(:));
+
+% 2. Calculate the expected counts (product of marginals / total)
+expectedSA = (azhist(:) * rangehist(:)') / total_samplesSA;
+
+% 3. Calculate the residuals
+residualsSA = histmatSA - expectedSA;
+
+% 4. Visualize the result
+nexttile
+imagesc(Azimuthedges, Speededges, residualsSA);
+colorbar;
+%title('Residual Plot (Observed - Expected)');
+title(sprintf('Residual Plot (Observed - Expected)\nSpeed-Azimuth: Spearman Rho: %.4f, P-value: %.4e\n', rhoSA, p_valSA))
+xlabel('Azimuth');
+ylabel('Speed');
+set(gca, 'ydir', 'norm')
+
+nexttile
+imagesc(Azimuthedges, Speededges, expectedSA);
+colorbar;
+title('Expected');
+xlabel('Azimuth');
+ylabel('Speed');
+set(gca, 'ydir', 'norm')
+
+nexttile
+dependencyFactorSA = histmatSA ./ ((azhist(:) * rangehist(:)') / sum(histmatSA(:)));
+imagesc(Azimuthedges, Speededges, dependencyFactorSA);
+colorbar;
+clim([-1 3]); % Adjust limits to focus on the area around 1 (independence)
+set(gca, 'ydir', 'norm')
+title('Dependency Factor');
+xlabel('Azimuth');
+ylabel('Speed');
+
+set(gcf, 'pos', [720          92        1634        1240])
 
 %%%%%%%%%%%%%%
 %% get cricket moving boolean
@@ -98,8 +340,8 @@ title(tl, 'no events or states')
 i=0;
 
 nexttile
-histmat=hist2(az(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Azimuthedges, Rangeedges);
-pcolor(Azimuthedges,Rangeedges,sqrt(histmat'));
+histmat=histcounts2(az(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Azimuthedges, Rangeedges);
+pcolor(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -108,8 +350,8 @@ title('cricket moving, Dark')
 hold on;
 
 nexttile
-histmat=hist2(mouse_spd(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Speededges, Rangeedges);
-pcolor(Rangeedges, Speededges,sqrt(histmat));
+histmat=histcounts2(mouse_spd(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Speededges, Rangeedges);
+pcolor(histx(Rangeedges), Speededges,sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Range, cm')
@@ -118,8 +360,8 @@ title('cricket moving, Dark')
 hold on;
 
 nexttile
-histmat=hist2(mouse_spd(logical(dark.*cricket_moving)), az(logical(dark.*cricket_moving)), Speededges, Azimuthedges);
-pcolor(Azimuthedges,Speededges,sqrt(histmat));
+histmat=histcounts2(mouse_spd(logical(dark.*cricket_moving)), az(logical(dark.*cricket_moving)), Speededges, Azimuthedges);
+pcolor(histx(Azimuthedges),Speededges,sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -128,8 +370,8 @@ title('cricket moving, Dark')
 hold on;
 
 nexttile
-histmat=hist2(az(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Azimuthedges, Rangeedges);
-pcolor(Azimuthedges,Rangeedges,sqrt(histmat'));
+histmat=histcounts2(az(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Azimuthedges, Rangeedges);
+pcolor(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -138,8 +380,8 @@ title('cricket still, Dark')
 hold on;
 
 nexttile
-histmat=hist2(mouse_spd(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Speededges, Rangeedges);
-pcolor(Rangeedges,Speededges,sqrt(histmat));
+histmat=histcounts2(mouse_spd(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Speededges, Rangeedges);
+pcolor(histx(Rangeedges),Speededges,sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Range, cm')
@@ -148,8 +390,8 @@ title('cricket still, Dark')
 hold on;
 
 nexttile
-histmat=hist2(mouse_spd(logical(dark.*cricket_still)), az(logical(dark.*cricket_still)), Speededges, Azimuthedges);
-pcolor(Azimuthedges,Speededges,sqrt(histmat));
+histmat=histcounts2(mouse_spd(logical(dark.*cricket_still)), az(logical(dark.*cricket_still)), Speededges, Azimuthedges);
+pcolor(histx(Azimuthedges),Speededges,sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -158,8 +400,8 @@ title('cricket still, Dark')
 hold on;
 
 nexttile
-histmat=hist2(az(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Azimuthedges, Rangeedges);
-pcolor(Azimuthedges,Rangeedges,sqrt(histmat'));
+histmat=histcounts2(az(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Azimuthedges, Rangeedges);
+pcolor(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -168,8 +410,8 @@ title('cricket moving, Light')
 hold on;
 
 nexttile
-histmat=hist2(mouse_spd(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Speededges, Rangeedges);
-pcolor(Rangeedges,Speededges,sqrt(histmat));
+histmat=histcounts2(mouse_spd(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Speededges, Rangeedges);
+pcolor(histx(Rangeedges),Speededges,sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Range, cm')
@@ -178,8 +420,8 @@ title('cricket moving, Light')
 hold on;
 
 nexttile
-histmat=hist2(mouse_spd(logical(light.*cricket_moving)), az(logical(light.*cricket_moving)), Speededges, Azimuthedges);
-pcolor(Azimuthedges,Speededges,sqrt(histmat));
+histmat=histcounts2(mouse_spd(logical(light.*cricket_moving)), az(logical(light.*cricket_moving)), Speededges, Azimuthedges);
+pcolor(histx(Azimuthedges),Speededges,sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -188,8 +430,8 @@ title('cricket moving, Light')
 hold on;
 
 nexttile
-histmat=hist2(az(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Azimuthedges, Rangeedges);
-pcolor(Azimuthedges,Rangeedges,sqrt(histmat'));
+histmat=histcounts2(az(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Azimuthedges, Rangeedges);
+pcolor(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -198,8 +440,8 @@ title('cricket still, Light')
 hold on;
 
 nexttile
-histmat=hist2(mouse_spd(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Speededges, Rangeedges);
-pcolor(Rangeedges,Speededges,sqrt(histmat));
+histmat=histcounts2(mouse_spd(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Speededges, Rangeedges);
+pcolor(histx(Rangeedges),histx(Speededges),sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Range, cm')
@@ -208,8 +450,8 @@ title('cricket still, Light')
 hold on;
 
 nexttile
-histmat=hist2(mouse_spd(logical(light.*cricket_still)), az(logical(light.*cricket_still)), Speededges, Azimuthedges);
-pcolor(Azimuthedges,Speededges,sqrt(histmat));
+histmat=histcounts2(mouse_spd(logical(light.*cricket_still)), az(logical(light.*cricket_still)), Speededges, Azimuthedges);
+pcolor(histx(Azimuthedges),histx(Speededges),sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -247,7 +489,7 @@ n=2;
 lw2=2;
 lw=2;
 
-histmat=hist2(az(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Azimuthedges, Rangeedges);
 [~,c]=contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'm', 'LineWidth', lw);
 % L=c.LevelList; %(this snippet is to use a fixed color scale across plots)
 % set(c, 'visible', 'off')
@@ -257,7 +499,7 @@ histmat=hist2(az(logical(dark.*cricket_moving)), range(logical(dark.*cricket_mov
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Azimuthedges, Rangeedges);
 [~,c]=contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
 title('dark')
 % set(c, 'visible', 'off')
@@ -265,53 +507,53 @@ title('dark')
 % contour(Azimuthedges,Rangeedges,sqrt(histmat'), c.LevelList(2)*[1 1],  'b', 'LineWidth', lw2);
 
 nexttile
-histmat=hist2(mouse_spd(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat), n, 'm', 'LineWidth', lw);
 xlabel('Range, cm')
 ylabel('Speed, cm/s')
 hold on
-histmat=hist2(mouse_spd(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
 title('dark')
 
 nexttile
-histmat=hist2(mouse_spd(logical(dark.*cricket_moving)), az(logical(dark.*cricket_moving)), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(dark.*cricket_moving)), az(logical(dark.*cricket_moving)), Speededges, Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n, 'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Speed, cm/s')
 hold on
-histmat=hist2(mouse_spd(logical(dark.*cricket_still)), az(logical(dark.*cricket_still)),Speededges,  Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(dark.*cricket_still)), az(logical(dark.*cricket_still)),Speededges,  Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('dark')
 
 nexttile
-histmat=hist2(az(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
 title('light')
 
 nexttile
-histmat=hist2(mouse_spd(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat), n, 'm', 'LineWidth', lw);
 xlabel('Range, cm')
 ylabel('Speed, cm/s')
 hold on
-histmat=hist2(mouse_spd(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
 title('light')
 
 nexttile
-histmat=hist2(mouse_spd(logical(light.*cricket_moving)), az(logical(light.*cricket_moving)), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(light.*cricket_moving)), az(logical(light.*cricket_moving)), Speededges, Azimuthedges);
 contour(Azimuthedges, Speededges,sqrt(histmat), n, 'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Speed, cm/s')
 hold on
-histmat=hist2(mouse_spd(logical(light.*cricket_still)), az(logical(light.*cricket_still)),Speededges,  Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(light.*cricket_still)), az(logical(light.*cricket_still)),Speededges,  Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('light')
@@ -332,67 +574,67 @@ nexttile
 n=1;
 lw=2;
 
-histmat=hist2(az(logical(cricket_moving.*chase)), range(logical(cricket_moving.*chase)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_moving.*chase)), range(logical(cricket_moving.*chase)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(cricket_still.*chase)), range(logical(cricket_still.*chase)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_still.*chase)), range(logical(cricket_still.*chase)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('chase')
 
 nexttile
-histmat=hist2(az(logical(cricket_moving.*approach)), range(logical(cricket_moving.*approach)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_moving.*approach)), range(logical(cricket_moving.*approach)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(cricket_still.*approach)), range(logical(cricket_still.*approach)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_still.*approach)), range(logical(cricket_still.*approach)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('approach')
 
 nexttile
-histmat=hist2(az(logical(cricket_moving.*pause)), range(logical(cricket_moving.*pause)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_moving.*pause)), range(logical(cricket_moving.*pause)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(cricket_still.*pause)), range(logical(cricket_still.*pause)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_still.*pause)), range(logical(cricket_still.*pause)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('pause')
 
 nexttile
-histmat=hist2(az(logical(cricket_moving.*wander)), range(logical(cricket_moving.*wander)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_moving.*wander)), range(logical(cricket_moving.*wander)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(cricket_still.*wander)), range(logical(cricket_still.*wander)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_still.*wander)), range(logical(cricket_still.*wander)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('wander')
 
 nexttile
-histmat=hist2(az(logical(cricket_moving(rangemin_event_frames))), range(logical(cricket_moving(rangemin_event_frames))), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_moving(rangemin_event_frames))), range(logical(cricket_moving(rangemin_event_frames))), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(cricket_still(rangemin_event_frames))), range(logical(cricket_still(rangemin_event_frames))), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_still(rangemin_event_frames))), range(logical(cricket_still(rangemin_event_frames))), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('rangemin')
 
 nexttile
-histmat=hist2(az(logical(cricket_moving(cricket_jump_event_frames))), range(logical(cricket_moving(cricket_jump_event_frames))), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_moving(cricket_jump_event_frames))), range(logical(cricket_moving(cricket_jump_event_frames))), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(cricket_still(cricket_jump_event_frames))), range(logical(cricket_still(cricket_jump_event_frames))), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(cricket_still(cricket_jump_event_frames))), range(logical(cricket_still(cricket_jump_event_frames))), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('cricket jump')
@@ -663,7 +905,7 @@ b.CData = my_colors;
 %%  2D joint probability heat maps
 % %loop through all states
 
-statenames={'chase', 'approach', 'wander', 'pause'};
+%statenames={'chase', 'approach', 'wander', 'pause'};
 
 thresholds.chase.az=[0 30];
 thresholds.chase.mouse_spd=[10 60];
@@ -681,6 +923,14 @@ thresholds.pause.az=[0 180]; %wide open
 thresholds.pause.mouse_spd=[0 5];
 thresholds.pause.range=[0 60]; %wide open
 
+thresholds.stalk.az=[30 180]; %wide open
+thresholds.stalk.mouse_spd=[3 15];
+thresholds.stalk.range=[5 40]; %wide open
+
+thresholds.none.az=[0 0];
+thresholds.none.range=[0 0];
+thresholds.none.mouse_spd=[0 0];
+
 
 for statename=statenames
 
@@ -696,11 +946,11 @@ for statename=statenames
     %dark & state
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(az(dark&state), range(dark&state), Azimuthedges, Rangeedges));
+        histmat=sqrt(histcounts2(az(dark&state), range(dark&state), Azimuthedges, Rangeedges));
     else
-        histmat=(hist2(az(dark&state), range(dark&state), Azimuthedges, Rangeedges));
+        histmat=(histcounts2(az(dark&state), range(dark&state), Azimuthedges, Rangeedges));
     end
-    pcolor(Azimuthedges,Rangeedges,histmat');
+    pcolor(histx(Azimuthedges),histx(Rangeedges),histmat');
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Range, cm')
@@ -713,11 +963,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(dark&state), range(dark&state), Speededges, Rangeedges));
+        histmat=sqrt(histcounts2(mouse_spd(dark&state), range(dark&state), Speededges, Rangeedges));
     else
-        histmat=(hist2(mouse_spd(dark&state), range(dark&state), Speededges, Rangeedges));
+        histmat=(histcounts2(mouse_spd(dark&state), range(dark&state), Speededges, Rangeedges));
     end
-    pcolor(Rangeedges,Speededges, histmat);
+    pcolor(histx(Rangeedges),histx(Speededges), histmat);
     shading interp
     xlabel('Range, cm')
     ylabel('Speed, cm/s')
@@ -730,11 +980,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(dark&state), az(dark&state), Speededges, Azimuthedges));
+        histmat=sqrt(histcounts2(mouse_spd(dark&state), az(dark&state), Speededges, Azimuthedges));
     else
-        histmat=(hist2(mouse_spd(dark&state), az(dark&state), Speededges, Azimuthedges));
+        histmat=(histcounts2(mouse_spd(dark&state), az(dark&state), Speededges, Azimuthedges));
     end
-    pcolor(Azimuthedges,Speededges,histmat);
+    pcolor(histx(Azimuthedges),histx(Speededges),histmat);
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Speed, cm/s')
@@ -750,11 +1000,11 @@ for statename=statenames
     %dark & ~state
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(az(dark&~state), range(dark&~state), Azimuthedges, Rangeedges));
+        histmat=sqrt(histcounts2(az(dark&~state), range(dark&~state), Azimuthedges, Rangeedges));
     else
-        histmat=(hist2(az(dark&~state), range(dark&~state), Azimuthedges, Rangeedges));
+        histmat=(histcounts2(az(dark&~state), range(dark&~state), Azimuthedges, Rangeedges));
     end
-    pcolor(Azimuthedges,Rangeedges,histmat');
+    pcolor(histx(Azimuthedges),histx(Rangeedges),histmat');
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Range, cm')
@@ -767,11 +1017,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(dark&~state), range(dark&~state), Speededges, Rangeedges));
+        histmat=sqrt(histcounts2(mouse_spd(dark&~state), range(dark&~state), Speededges, Rangeedges));
     else
-        histmat=(hist2(mouse_spd(dark&~state), range(dark&~state), Speededges, Rangeedges));
+        histmat=(histcounts2(mouse_spd(dark&~state), range(dark&~state), Speededges, Rangeedges));
     end
-    pcolor(Rangeedges,Speededges, histmat);
+    pcolor(histx(Rangeedges),histx(Speededges), histmat);
     shading interp
     xlabel('Range, cm')
     ylabel('Speed, cm/s')
@@ -784,11 +1034,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(dark&~state), az(dark&~state), Speededges, Azimuthedges));
+        histmat=sqrt(histcounts2(mouse_spd(dark&~state), az(dark&~state), Speededges, Azimuthedges));
     else
-        histmat=(hist2(mouse_spd(dark&~state), az(dark&~state), Speededges, Azimuthedges));
+        histmat=(histcounts2(mouse_spd(dark&~state), az(dark&~state), Speededges, Azimuthedges));
     end
-    pcolor(Azimuthedges,Speededges,histmat);
+    pcolor(histx(Azimuthedges),histx(Speededges),histmat);
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Speed, cm/s')
@@ -804,11 +1054,11 @@ for statename=statenames
     %light & state
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(az(light&state), range(light&state), Azimuthedges, Rangeedges));
+        histmat=sqrt(histcounts2(az(light&state), range(light&state), Azimuthedges, Rangeedges));
     else
-        histmat=(hist2(az(light&state), range(light&state), Azimuthedges, Rangeedges));
+        histmat=(histcounts2(az(light&state), range(light&state), Azimuthedges, Rangeedges));
     end
-    pcolor(Azimuthedges,Rangeedges,histmat');
+    pcolor(histx(Azimuthedges),histx(Rangeedges),histmat');
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Range, cm')
@@ -821,11 +1071,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(light&state), range(light&state), Speededges, Rangeedges));
+        histmat=sqrt(histcounts2(mouse_spd(light&state), range(light&state), Speededges, Rangeedges));
     else
-        histmat=(hist2(mouse_spd(light&state), range(light&state), Speededges, Rangeedges));
+        histmat=(histcounts2(mouse_spd(light&state), range(light&state), Speededges, Rangeedges));
     end
-    pcolor(Rangeedges,Speededges, histmat);
+    pcolor(histx(Rangeedges),histx(Speededges), histmat);
     shading interp
     xlabel('Range, cm')
     ylabel('Speed, cm/s')
@@ -838,11 +1088,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(light&state), az(light&state), Speededges, Azimuthedges));
+        histmat=sqrt(histcounts2(mouse_spd(light&state), az(light&state), Speededges, Azimuthedges));
     else
-        histmat=(hist2(mouse_spd(light&state), az(light&state), Speededges, Azimuthedges));
+        histmat=(histcounts2(mouse_spd(light&state), az(light&state), Speededges, Azimuthedges));
     end
-    pcolor(Azimuthedges,Speededges,histmat);
+    pcolor(histx(Azimuthedges),histx(Speededges),histmat);
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Speed, cm/s')
@@ -858,11 +1108,11 @@ for statename=statenames
     %light & ~state
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(az(light&~state), range(light&~state), Azimuthedges, Rangeedges));
+        histmat=sqrt(histcounts2(az(light&~state), range(light&~state), Azimuthedges, Rangeedges));
     else
-        histmat=(hist2(az(light&~state), range(light&~state), Azimuthedges, Rangeedges));
+        histmat=(histcounts2(az(light&~state), range(light&~state), Azimuthedges, Rangeedges));
     end
-    pcolor(Azimuthedges,Rangeedges,histmat');
+    pcolor(histx(Azimuthedges),histx(Rangeedges),histmat');
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Range, cm')
@@ -875,11 +1125,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(light&~state), range(light&~state), Speededges, Rangeedges));
+        histmat=sqrt(histcounts2(mouse_spd(light&~state), range(light&~state), Speededges, Rangeedges));
     else
-        histmat=(hist2(mouse_spd(light&~state), range(light&~state), Speededges, Rangeedges));
+        histmat=(histcounts2(mouse_spd(light&~state), range(light&~state), Speededges, Rangeedges));
     end
-    pcolor(Rangeedges,Speededges, histmat);
+    pcolor(histx(Rangeedges),histx(Speededges), histmat);
     shading interp
     xlabel('Range, cm')
     ylabel('Speed, cm/s')
@@ -892,11 +1142,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(light&~state), az(light&~state), Speededges, Azimuthedges));
+        histmat=sqrt(histcounts2(mouse_spd(light&~state), az(light&~state), Speededges, Azimuthedges));
     else
-        histmat=(hist2(mouse_spd(light&~state), az(light&~state), Speededges, Azimuthedges));
+        histmat=(histcounts2(mouse_spd(light&~state), az(light&~state), Speededges, Azimuthedges));
     end
-    pcolor(Azimuthedges,Speededges,histmat);
+    pcolor(histx(Azimuthedges),histx(Speededges),histmat);
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Speed, cm/s')
@@ -910,6 +1160,7 @@ for statename=statenames
     ylabel(h, sprintf('sqrt=%d', dosqrt));
 
 end
+set(get((get(gcf, 'Children')), 'Children'), 'fontsize', 18)
 
 %%%%%%%%%%%%
 %%  more 2D joint probability heat maps
@@ -931,11 +1182,11 @@ for statename=statenames
     %dark & state
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(az(dark(state)), range(dark(state)), Azimuthedges, Rangeedges));
+        histmat=sqrt(histcounts2(az(dark(state)), range(dark(state)), Azimuthedges, Rangeedges));
     else
-        histmat=(hist2(az(dark(state)), range(dark(state)), Azimuthedges, Rangeedges));
+        histmat=(histcounts2(az(dark(state)), range(dark(state)), Azimuthedges, Rangeedges));
     end
-    pcolor(Azimuthedges,Rangeedges,histmat');
+    pcolor(histx(Azimuthedges),histx(Rangeedges),histmat');
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Range, cm')
@@ -943,11 +1194,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(dark(state)), range(dark(state)), Speededges, Rangeedges));
+        histmat=sqrt(histcounts2(mouse_spd(dark(state)), range(dark(state)), Speededges, Rangeedges));
     else
-        histmat=(hist2(mouse_spd(dark(state)), range(dark(state)), Speededges, Rangeedges));
+        histmat=(histcounts2(mouse_spd(dark(state)), range(dark(state)), Speededges, Rangeedges));
     end
-    pcolor(Rangeedges,Speededges,histmat);
+    pcolor(histx(Rangeedges),histx(Speededges),histmat);
     shading interp
     xlabel('Range, cm')
     ylabel('Speed, cm/s')
@@ -955,11 +1206,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(dark(state)), az(dark(state)), Speededges, Azimuthedges));
+        histmat=sqrt(histcounts2(mouse_spd(dark(state)), az(dark(state)), Speededges, Azimuthedges));
     else
-        histmat=(hist2(mouse_spd(dark(state)), az(dark(state)), Speededges, Azimuthedges));
+        histmat=(histcounts2(mouse_spd(dark(state)), az(dark(state)), Speededges, Azimuthedges));
     end
-    pcolor(Azimuthedges,Speededges,histmat);
+    pcolor(histx(Azimuthedges),histx(Speededges),histmat);
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Speed, cm/s')
@@ -971,11 +1222,11 @@ for statename=statenames
     %light & state
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(az(light(state)), range(light(state)), Azimuthedges, Rangeedges));
+        histmat=sqrt(histcounts2(az(light(state)), range(light(state)), Azimuthedges, Rangeedges));
     else
-        histmat=(hist2(az(light(state)), range(light(state)), Azimuthedges, Rangeedges));
+        histmat=(histcounts2(az(light(state)), range(light(state)), Azimuthedges, Rangeedges));
     end
-    pcolor(Azimuthedges,Rangeedges,histmat');
+    pcolor(histx(Azimuthedges),histx(Rangeedges),histmat');
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Range, cm')
@@ -983,11 +1234,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(light(state)), range(light(state)), Speededges, Rangeedges));
+        histmat=sqrt(histcounts2(mouse_spd(light(state)), range(light(state)), Speededges, Rangeedges));
     else
-        histmat=(hist2(mouse_spd(light(state)), range(light(state)), Speededges, Rangeedges));
+        histmat=(histcounts2(mouse_spd(light(state)), range(light(state)), Speededges, Rangeedges));
     end
-    pcolor(Rangeedges,Speededges,histmat);
+    pcolor(histx(Rangeedges),histx(Speededges),histmat);
     shading interp
     xlabel('Range, cm')
     ylabel('Speed, cm/s')
@@ -995,11 +1246,11 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmat=sqrt(hist2(mouse_spd(light(state)), az(light(state)), Speededges, Azimuthedges));
+        histmat=sqrt(histcounts2(mouse_spd(light(state)), az(light(state)), Speededges, Azimuthedges));
     else
-        histmat=(hist2(mouse_spd(light(state)), az(light(state)), Speededges, Azimuthedges));
+        histmat=(histcounts2(mouse_spd(light(state)), az(light(state)), Speededges, Azimuthedges));
     end
-    pcolor(Azimuthedges,Speededges,histmat);
+    pcolor(histx(Azimuthedges),histx(Speededges),histmat);
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Speed, cm/s')
@@ -1024,102 +1275,102 @@ nexttile
 n=1;
 lw=2;
 
-histmat=hist2(az(logical(dark.*chase)), range(logical(dark.*chase)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(dark.*chase)), range(logical(dark.*chase)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'r', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(dark.*approach)), range(logical(dark.*approach)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(dark.*approach)), range(logical(dark.*approach)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
-histmat=hist2(az(logical(dark.*pause)), range(logical(dark.*pause)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(dark.*pause)), range(logical(dark.*pause)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
-histmat=hist2(az(logical(dark.*wander)), range(logical(dark.*wander)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(dark.*wander)), range(logical(dark.*wander)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'g', 'LineWidth', lw);
-histmat=hist2(az(logical(dark(rangemin_event_frames))), range(logical(dark(rangemin_event_frames))), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(dark(rangemin_event_frames))), range(logical(dark(rangemin_event_frames))), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('dark')
 
 nexttile
-histmat=hist2(mouse_spd(logical(dark.*chase)), range(logical(dark.*chase)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(dark.*chase)), range(logical(dark.*chase)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges, sqrt(histmat), n, 'r', 'LineWidth', lw);
 xlabel('Range, cm')
 ylabel('Speed, cm/s')
 hold on
-histmat=hist2(mouse_spd(logical(dark.*approach)), range(logical(dark.*approach)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(dark.*approach)), range(logical(dark.*approach)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n,  'm', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(dark.*pause)), range(logical(dark.*pause)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(dark.*pause)), range(logical(dark.*pause)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n,  'b', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(dark.*wander)), range(logical(dark.*wander)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(dark.*wander)), range(logical(dark.*wander)), Speededges, Rangeedges);
 contour(Rangeedges, Speededges, sqrt(histmat), n,  'g', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(dark(rangemin_event_frames))), range(logical(dark(rangemin_event_frames))), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(dark(rangemin_event_frames))), range(logical(dark(rangemin_event_frames))), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('dark')
 
 nexttile
-histmat=hist2(mouse_spd(logical(dark.*chase)), az(logical(dark.*chase)), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(dark.*chase)), az(logical(dark.*chase)), Speededges, Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n, 'r', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Speed, cm/s')
 hold on
-histmat=hist2(mouse_spd(logical(dark.*approach)), az(logical(dark.*approach)),Speededges,  Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(dark.*approach)), az(logical(dark.*approach)),Speededges,  Azimuthedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n,  'm', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(dark.*pause)), az(logical(dark.*pause)), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(dark.*pause)), az(logical(dark.*pause)), Speededges, Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(dark.*wander)), az(logical(dark.*wander)), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(dark.*wander)), az(logical(dark.*wander)), Speededges, Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n,  'g', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(dark(rangemin_event_frames))), az(logical(dark(rangemin_event_frames))), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(dark(rangemin_event_frames))), az(logical(dark(rangemin_event_frames))), Speededges, Azimuthedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('dark')
 
 nexttile
-histmat=hist2(az(logical(light.*chase)), range(logical(light.*chase)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(light.*chase)), range(logical(light.*chase)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'r', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
-histmat=hist2(az(logical(light.*approach)), range(logical(light.*approach)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(light.*approach)), range(logical(light.*approach)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
-histmat=hist2(az(logical(light.*pause)), range(logical(light.*pause)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(light.*pause)), range(logical(light.*pause)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
-histmat=hist2(az(logical(light.*wander)), range(logical(light.*wander)), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(light.*wander)), range(logical(light.*wander)), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'g', 'LineWidth', lw);
-histmat=hist2(az(logical(light(rangemin_event_frames))), range(logical(light(rangemin_event_frames))), Azimuthedges, Rangeedges);
+histmat=histcounts2(az(logical(light(rangemin_event_frames))), range(logical(light(rangemin_event_frames))), Azimuthedges, Rangeedges);
 contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'c', 'LineWidth', lw);legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('light')
 
 nexttile
-histmat=hist2(mouse_spd(logical(light.*chase)), range(logical(light.*chase)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(light.*chase)), range(logical(light.*chase)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n, 'r', 'LineWidth', lw);
 xlabel('Range, cm')
 ylabel('Speed, cm/s')
 hold on
-histmat=hist2(mouse_spd(logical(light.*approach)), range(logical(light.*approach)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(light.*approach)), range(logical(light.*approach)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n,  'm', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(light.*pause)), range(logical(light.*pause)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(light.*pause)), range(logical(light.*pause)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n,  'b', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(light.*wander)), range(logical(light.*wander)), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(light.*wander)), range(logical(light.*wander)), Speededges, Rangeedges);
 contour(Rangeedges,Speededges, sqrt(histmat), n,  'g', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(light(rangemin_event_frames))), range(logical(light(rangemin_event_frames))), Speededges, Rangeedges);
+histmat=histcounts2(mouse_spd(logical(light(rangemin_event_frames))), range(logical(light(rangemin_event_frames))), Speededges, Rangeedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('light')
 
 nexttile
-histmat=hist2(mouse_spd(logical(light.*chase)), az(logical(light.*chase)), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(light.*chase)), az(logical(light.*chase)), Speededges, Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n, 'r', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Speed, cm/s')
 hold on
-histmat=hist2(mouse_spd(logical(light.*approach)), az(logical(light.*approach)), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(light.*approach)), az(logical(light.*approach)), Speededges, Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n,  'm', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(light.*pause)), az(logical(light.*pause)), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(light.*pause)), az(logical(light.*pause)), Speededges, Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(light.*wander)), az(logical(light.*wander)), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(light.*wander)), az(logical(light.*wander)), Speededges, Azimuthedges);
 contour(Azimuthedges,Speededges,sqrt(histmat), n,  'g', 'LineWidth', lw);
-histmat=hist2(mouse_spd(logical(light(rangemin_event_frames))), az(logical(light(rangemin_event_frames))), Speededges, Azimuthedges);
+histmat=histcounts2(mouse_spd(logical(light(rangemin_event_frames))), az(logical(light(rangemin_event_frames))), Speededges, Azimuthedges);
 contour(Rangeedges,Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('light')
@@ -1362,13 +1613,13 @@ for statename=statenames
     set(gcf, "Position", [440 880 1300 420])
     nexttile
     if dosqrt
-        histmaton=sqrt(hist2(az(dark&state&laseron), range(dark&state&laseron), Azimuthedges, Rangeedges));
-        histmatoff=sqrt(hist2(az(dark&state&~laseron), range(dark&state&~laseron), Azimuthedges, Rangeedges));
+        histmaton=sqrt(histcounts2(az(dark&state&laseron), range(dark&state&laseron), Azimuthedges, Rangeedges));
+        histmatoff=sqrt(histcounts2(az(dark&state&~laseron), range(dark&state&~laseron), Azimuthedges, Rangeedges));
     else
-        histmaton=(hist2(az(dark&state&laseron), range(dark&state&laseron), Azimuthedges, Rangeedges));
-        histmatoff=(hist2(az(dark&state&~laseron), range(dark&state&~laseron), Azimuthedges, Rangeedges));
+        histmaton=(histcounts2(az(dark&state&laseron), range(dark&state&laseron), Azimuthedges, Rangeedges));
+        histmatoff=(histcounts2(az(dark&state&~laseron), range(dark&state&~laseron), Azimuthedges, Rangeedges));
     end
-    pcolor(Azimuthedges,Rangeedges,(histmaton'-histmatoff'));
+    pcolor(histx(Azimuthedges),histx(Rangeedges),(histmaton'-histmatoff'));
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Range, cm')
@@ -1384,13 +1635,13 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmaton=sqrt(hist2(mouse_spd(dark&state&laseron), range(dark&state&laseron), Speededges, Rangeedges));
-        histmatoff=sqrt(hist2(mouse_spd(dark&state&~laseron), range(dark&state&~laseron), Speededges, Rangeedges));
+        histmaton=sqrt(histcounts2(mouse_spd(dark&state&laseron), range(dark&state&laseron), Speededges, Rangeedges));
+        histmatoff=sqrt(histcounts2(mouse_spd(dark&state&~laseron), range(dark&state&~laseron), Speededges, Rangeedges));
     else
-        histmaton=(hist2(mouse_spd(dark&state&laseron), range(dark&state&laseron), Speededges, Rangeedges));
-        histmatoff=(hist2(mouse_spd(dark&state&~laseron), range(dark&state&~laseron), Speededges, Rangeedges));
+        histmaton=(histcounts2(mouse_spd(dark&state&laseron), range(dark&state&laseron), Speededges, Rangeedges));
+        histmatoff=(histcounts2(mouse_spd(dark&state&~laseron), range(dark&state&~laseron), Speededges, Rangeedges));
     end
-    pcolor(Rangeedges,Speededges,(histmaton-histmatoff));
+    pcolor(histx(Rangeedges),Speededges,(histmaton-histmatoff));
     shading interp
     xlabel('Range, cm')
     ylabel('Speed, cm/s')
@@ -1405,14 +1656,15 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmaton=sqrt(hist2(mouse_spd(dark&state&laseron), az(dark&state&laseron), Speededges, Azimuthedges));
-        histmatoff=sqrt(hist2(mouse_spd(dark&state&~laseron), az(dark&state&~laseron), Speededges, Azimuthedges));
+        histmaton=sqrt(histcounts2(mouse_spd(dark&state&laseron), az(dark&state&laseron), Speededges, Azimuthedges));
+        histmatoff=sqrt(histcounts2(mouse_spd(dark&state&~laseron), az(dark&state&~laseron), Speededges, Azimuthedges));
     else
-        histmaton=(hist2(mouse_spd(dark&state&laseron), az(dark&state&laseron), Speededges, Azimuthedges));
-        histmatoff=(hist2(mouse_spd(dark&state&~laseron), az(dark&state&~laseron), Speededges, Azimuthedges));
+        histmaton=(histcounts2(mouse_spd(dark&state&laseron), az(dark&state&laseron), Speededges, Azimuthedges));
+        histmatoff=(histcounts2(mouse_spd(dark&state&~laseron), az(dark&state&~laseron), Speededges, Azimuthedges));
     end
-    pcolor(Azimuthedges,Speededges,(histmaton-histmatoff));
-    colormap blue_to_red
+    pcolor(histx(Azimuthedges),Speededges,(histmaton-histmatoff));
+     colormap blue_to_red
+    colormap redbluecmap
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Speed, cm/s')
@@ -1434,7 +1686,7 @@ end
 %
 % loop through all states
 
-statenames={'chase', 'approach', 'wander', 'pause'};
+statenames={'chase', 'approach', 'wander', 'stalk',  'pause'};
 for statename=statenames
 
     state=eval(statename{:});
@@ -1445,13 +1697,13 @@ for statename=statenames
     set(gcf, "Position", [440 880 1300 420])
     nexttile
     if dosqrt
-        histmaton=sqrt(hist2(az(dark&state), range(dark&state), Azimuthedges, Rangeedges));
-        histmatoff=sqrt(hist2(az(light&state), range(light&state), Azimuthedges, Rangeedges));
+        histmaton=sqrt(histcounts2(az(dark&state), range(dark&state), Azimuthedges, Rangeedges));
+        histmatoff=sqrt(histcounts2(az(light&state), range(light&state), Azimuthedges, Rangeedges));
     else
-        histmaton=(hist2(az(dark&state), range(dark&state), Azimuthedges, Rangeedges));
-        histmatoff=(hist2(az(light&state), range(light&state), Azimuthedges, Rangeedges));
+        histmaton=(histcounts2(az(dark&state), range(dark&state), Azimuthedges, Rangeedges));
+        histmatoff=(histcounts2(az(light&state), range(light&state), Azimuthedges, Rangeedges));
     end
-    pcolor(Azimuthedges,Rangeedges,(histmaton'-histmatoff'));
+    pcolor(histx(Azimuthedges),histx(Rangeedges),(histmaton'-histmatoff'));
     shading interp
     xlabel('Azimuth, degrees')
     ylabel('Range, cm')
@@ -1466,13 +1718,13 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmaton=sqrt(hist2(mouse_spd(dark&state), range(dark&state), Speededges, Rangeedges));
-        histmatoff=sqrt(hist2(mouse_spd(light&state), range(light&state), Speededges, Rangeedges));
+        histmaton=sqrt(histcounts2(mouse_spd(dark&state), range(dark&state), Speededges, Rangeedges));
+        histmatoff=sqrt(histcounts2(mouse_spd(light&state), range(light&state), Speededges, Rangeedges));
     else
-        histmaton=sqrt(hist2(mouse_spd(dark&state), range(dark&state), Speededges, Rangeedges));
-        histmatoff=sqrt(hist2(mouse_spd(light&state), range(light&state), Speededges, Rangeedges));
+        histmaton=sqrt(histcounts2(mouse_spd(dark&state), range(dark&state), Speededges, Rangeedges));
+        histmatoff=sqrt(histcounts2(mouse_spd(light&state), range(light&state), Speededges, Rangeedges));
     end
-    pcolor(Rangeedges,Speededges,(histmaton-histmatoff));
+    pcolor(histx(Rangeedges),histx(Speededges),(histmaton-histmatoff));
     shading interp
     xlabel('Range, cm')
     ylabel('Speed, cm/s')
@@ -1487,13 +1739,13 @@ for statename=statenames
 
     nexttile
     if dosqrt
-        histmaton=(hist2(mouse_spd(dark&state), az(dark&state), Speededges, Azimuthedges));
-        histmatoff=(hist2(mouse_spd(light&state), az(light&state), Speededges, Azimuthedges));
+        histmaton=(histcounts2(mouse_spd(dark&state), az(dark&state), Speededges, Azimuthedges));
+        histmatoff=(histcounts2(mouse_spd(light&state), az(light&state), Speededges, Azimuthedges));
     else
-        histmaton=sqrt(hist2(mouse_spd(dark&state), az(dark&state), Speededges, Azimuthedges));
-        histmatoff=sqrt(hist2(mouse_spd(light&state), az(light&state), Speededges, Azimuthedges));
+        histmaton=sqrt(histcounts2(mouse_spd(dark&state), az(dark&state), Speededges, Azimuthedges));
+        histmatoff=sqrt(histcounts2(mouse_spd(light&state), az(light&state), Speededges, Azimuthedges));
     end
-    pcolor(Azimuthedges,Speededges,(histmaton-histmatoff));
+    pcolor(histx(Azimuthedges),histx(Speededges),(histmaton-histmatoff));
     colormap blue_to_red
     shading interp
     xlabel('Azimuth, degrees')
@@ -1508,4 +1760,122 @@ for statename=statenames
     ylabel(h, sprintf('sqrt=%d', dosqrt));
     cl=clim;
     clim([-1 1]*max(abs(cl)))
+end
+
+
+%% test for significant effects of light vs dark on overall geometries
+[p,h,stats] =ranksum(  mouse_spd(dark), mouse_spd(light));
+fprintf('\nmedian mouse_spd(dark): %.1f, mouse_spd(light): %.1f cms/s', nanmedian(mouse_spd(dark)), nanmedian(mouse_spd(light)))
+fprintf('\tranksum p=%.4f z=%.0f', p, stats.zval)
+
+[p,h,stats] =ranksum(  az(dark), az(light));
+fprintf('\nmedian az(dark): %.1f, az(light): %.1f cms/s', nanmedian(az(dark)), nanmedian(az(light)))
+fprintf('\tranksum p=%.4f z=%.0f', p, stats.zval)
+
+[p,h,stats] =ranksum(  range(dark), range(light));
+fprintf('\nmedian range(dark): %.1f, range(light): %.1f cms/s', nanmedian(range(dark)), nanmedian(range(light)))
+fprintf('\tranksum p=%.4f z=%.0f', p, stats.zval)
+
+%Molly points out that using frames as the n here is totally invalid.
+%if you use mouse as the n, the signranks are not significant.
+%if you use session as the n, the p-values are tiny, but is that a valid n?
+
+figure
+    tiledlayout(1,3, "TileSpacing","compact")
+    set(gcf, "Position", [440 880 1300 420])
+nexttile
+gold=[    0.9290    0.6940    0.1250];
+ndark=histcounts(mouse_spd(dark), Speededges);
+nlight=histcounts(mouse_spd(light), Speededges);
+p=plot(histx(Speededges), ndark, 'k', histx(Speededges), nlight, 'y');
+p(2).Color=gold;
+xlabel('speed')
+
+nexttile
+ndark=histcounts(az(dark), Azimuthedges, 'norm', 'pdf');
+nlight=histcounts(az(light), Azimuthedges, 'norm', 'pdf');
+p=plot(histx(Azimuthedges), ndark, 'k', histx(Azimuthedges), nlight, 'y');
+p(2).Color=gold;
+xlabel('az')
+
+nexttile
+ndark=histcounts(range(dark), Rangeedges);
+nlight=histcounts(range(light), Rangeedges);
+p=plot(histx(Rangeedges), ndark, 'k', histx(Rangeedges), nlight, 'y');
+p(2).Color=gold;
+xlabel('range')
+
+%%%%%%%%
+
+
+fprintf('\n there were %d pauses in the dark, for a total pause duration of %d frames', sum(dark(pause_start_frames)), sum(dark&pause))
+fprintf('\n there were %d pauses in the light, for a total pause duration of %d frames', sum(light(pause_start_frames)), sum(light&pause))
+fprintf('\nthat''s %.1fx more pauses in the dark, lasting %.1fx as long', sum(dark(pause_start_frames))/sum(light(pause_start_frames)), sum(dark&pause)/sum(light&pause))
+fprintf('\n(%.1fx more pauses in the light, lasting %.1fx as long)', sum(light(pause_start_frames))/sum(dark(pause_start_frames)), sum(light&pause)/sum(dark&pause))
+fprintf('\n')
+
+fprintf('\n there were %d stalks in the dark, for a total stalk duration of %d frames', sum(dark(stalk_start_frames)), sum(dark&stalk))
+fprintf('\n there were %d stalks in the light, for a total stalk duration of %d frames', sum(light(stalk_start_frames)), sum(light&stalk))
+fprintf('\nthat''s %.1fx more stalks in the dark, lasting %.1fx as long', sum(dark(stalk_start_frames))/sum(light(stalk_start_frames)), sum(dark&stalk)/sum(light&stalk))
+fprintf('\n(%.1fx more stalks in the light, lasting %.1fx as long)', sum(light(stalk_start_frames))/sum(dark(stalk_start_frames)), sum(light&stalk)/sum(dark&stalk))
+
+%% plot a single trial
+close all
+figure
+set(gcf, 'pos', [613         818        1796         420])
+for i=212 % 144 between 1 and height(metadata)
+
+    fname=metadata{i, 'filename'};
+    trialframes=find(contains(filename, fname));
+    cricketdrop = metadata{i, 'cricketdrop'};
+    captureframe = metadata{i, 'captureframe'};
+    if  cricketdrop & captureframe
+        trialframes=trialframes(cricketdrop:captureframe);
+        %frames that are after cricket drop and before captureframe and are on this trial
+        if length(trialframes)>30*200
+
+            aztrial=az(trialframes);
+            mouse_spdtrial=mouse_spd(trialframes);
+            rangetrial=range(trialframes);
+            cricket_spdtrial=cricket_spd(trialframes);
+            t=1:length(trialframes);
+            t=t/200;
+
+            % aztrial=aztrial/max(aztrial);
+            % mouse_spdtrial=mouse_spdtrial/max(mouse_spdtrial);
+            % rangetrial=3*rangetrial/max(rangetrial);
+            % cricket_spdtrial=cricket_spdtrial/max(cricket_spdtrial);
+
+            aztrial=medfilt1(aztrial, 10);
+            mouse_spdtrial=medfilt1(mouse_spdtrial, 10);
+            rangetrial=medfilt1(rangetrial, 10);
+            cricket_spdtrial=medfilt1(cricket_spdtrial, 10);
+
+
+            %p=plot(t, mouse_spdtrial, t, cricket_spdtrial, t, rangetrial, t, aztrial);
+            %legend('mouse speed', 'cricket speed', 'range', 'az')
+            gold=[    0.9290    0.6940    0.1250];
+            purple= [0.4940 0.1840 0.5560];
+
+            yyaxis left
+            set(gca, 'YColor', gold)
+            p1=plot(  t,  rangetrial);
+            set(p1, 'linew', 2, 'linestyle', '-')
+            set(p1, 'Color', gold)
+            ylabel('Range, cm')
+            yyaxis right
+            p2=plot( t, cricket_spdtrial,t,  aztrial);
+            set(p2, 'linew', 2)
+            set(p2, 'linew', 2, 'linestyle', '-')
+            set(p2(2), 'linew', .5, 'linestyle', '-', 'Color', purple)
+
+            legend('range', 'cricket speed', 'az')
+            ylim([0 300])
+            yticks([0 90 180])
+            ylabel('Azimuth/Cricket Speed')
+            title(i)
+            set(gca, 'fontsize', 18)
+            builtin('pause', 2)
+        end
+    end
 end

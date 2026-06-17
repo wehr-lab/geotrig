@@ -40,7 +40,7 @@ wander = spd_condition & range_condition & az_condition & cricket_present;
 wander_start_frames=find(diff(wander)==1);
 wander_end_frames=find(diff(wander)==-1);
 if wander(end)==1
-    wander_end_frames=[wander_end_frames f];
+    wander_end_frames=[wander_end_frames length(wander)];
 end
 if length(wander_start_frames) ~= length(wander_end_frames) error('mismatched wander start/stop'), end
 wander_durs=wander_end_frames-wander_start_frames;

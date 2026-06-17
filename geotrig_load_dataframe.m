@@ -49,7 +49,7 @@ localframe=dataframe.localframe;
 filename=dataframe.filename;
 elapsed_time=toc;
 fprintf('done. read %d frames in %.1fmin', num_geoframes, elapsed_time/60)
-keyboard
+%keyboard
 
 %%%%%%%%%%%%%%%
 

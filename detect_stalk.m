@@ -5,7 +5,7 @@ function [stalk, stalk_start_frames, stalk_end_frames, stalk_durs]=detect_stalk(
 % also returns stalk_start_frames and stalk_end_frames as events, and stalk_durs 
 
 % params:
-stalk_speed_thresh=[3 15]; %[min max]  cm/s
+stalk_speed_thresh=[2 15]; %[min max]  cm/s
 stalk_range_thresh= [5 40]; % [min max],  cm
 stalk_az_thresh=30; %min, in degrees
 stalk_cspeed_thresh=1; % cricket speed min cm/s
