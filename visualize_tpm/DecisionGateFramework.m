@@ -44,8 +44,8 @@ if 0
 for event_type=1:eventnames
 
     % Identify frames where 'Lose Contact' happened during a chase
-    %    chase_states = [1, 2, 3]; % Fast, Med, Slow
-    chase_states = [4:6]; % Fast, Med, Slow
+        chase_states = [1, 2, 3]; % Fast, Med, Slow
+    %chase_states = [4:6]; % Fast, Med, Slow
 
     event_indices = find(event_vec == event_type);
 
