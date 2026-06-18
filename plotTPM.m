@@ -281,7 +281,7 @@ plot_tpm_circle(TPMlight, statenames, opts)
 % plot_tpm_diff_circle(TPMdark-TPMlight, statenames, 'MinAbsDiff', 0.001);
 % this still looks very messy
 
-% bar graph of dark-light state counts
+%% bar graph of dark-light state counts
 figure
 diffs = statecountsdark - statecountslight;
 b = bar(statenames, diffs);
@@ -295,3 +295,21 @@ b = bar(statenames, [ statecountsdark; statecountslight]);
 ylabel(' state counts ')
 title('dark vs light')
 legend('dark', 'light', 'location', 'northwest')
+
+%% plot eigenspectrum
+plot_tpm_spectrum(TPMdark)
+
+%% plot State probability trajectories from each starting state
+
+%plot for a specific initial condition, such as pause
+pi0=contains(statenames, 'pause'); %0s for all states except 1 at the match
+numsteps=200;
+plot_occupancy_over_time(TPMdark, numsteps,    'stateNames', statenames, 'pi0', pi0);
+
+%plot for each  initial condition
+for i=1:length(statenames)
+    pi0=zeros(size(statenames));
+    pi0(i)=1;
+    plot_occupancy_over_time(TPMdark, numsteps,    'stateNames', statenames, 'pi0', pi0);
+end
+

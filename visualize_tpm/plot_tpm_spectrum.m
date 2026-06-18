@@ -29,62 +29,81 @@ function eigvals = plot_tpm_spectrum(P, varargin)
 %   - A second plot shows |lambda| sorted in descending order, which
 %     often makes such gaps easier to spot than the complex-plane view.
 
-    p = inputParser;
-    addRequired(p, 'P', @(x) ismatrix(x) && size(x,1)==size(x,2));
-    addParameter(p, 'nLabel', [], @(x) isempty(x) || (isscalar(x) && x>=0));
-    parse(p, P, varargin{:});
+p = inputParser;
+addRequired(p, 'P', @(x) ismatrix(x) && size(x,1)==size(x,2));
+addParameter(p, 'nLabel', [], @(x) isempty(x) || (isscalar(x) && x>=0));
+parse(p, P, varargin{:});
 
-    P = p.Results.P;
-    N = size(P,1);
+fps=200;
 
-    nLabel = p.Results.nLabel;
-    if isempty(nLabel)
-        nLabel = min(N,5);
-    end
+P = p.Results.P;
+N = size(P,1);
 
-    eigvals = eig(P);
-    [~, order] = sort(abs(eigvals), 'descend');
-    eigvals = eigvals(order);
+nLabel = p.Results.nLabel;
+if isempty(nLabel)
+    nLabel = min(N,5);
+end
 
-    figure('Color','w');
+eigvals = eig(P);
+[~, order] = sort(abs(eigvals), 'descend');
+eigvals = eigvals(order);
 
-    % --- Left panel: complex plane ---
-    subplot(1,2,1);
-    hold on;
-    th = linspace(0,2*pi,200);
-    plot(cos(th), sin(th), 'k--', 'LineWidth', 1); % unit circle
-    plot(real(eigvals), imag(eigvals), 'o', 'MarkerSize', 8, ...
-        'MarkerFaceColor', [0.2 0.4 0.8], 'MarkerEdgeColor', 'k');
+figure('Color','w');
 
-    for k = 1:min(nLabel, N)
-        lam = eigvals(k);
-        text(real(lam)+0.03, imag(lam)+0.03, sprintf('\\lambda_{%d}', k), ...
-            'FontSize', 10);
-    end
+% --- Left panel: complex plane ---
+subplot(1,3,1);
+hold on;
+th = linspace(0,2*pi,200);
+plot(cos(th), sin(th), 'k--', 'LineWidth', 1); % unit circle
+plot(real(eigvals), imag(eigvals), 'o', 'MarkerSize', 8, ...
+    'MarkerFaceColor', [0.2 0.4 0.8], 'MarkerEdgeColor', 'k');
 
-    axis equal;
-    xlabel('Re(\lambda)');
-    ylabel('Im(\lambda)');
-    title('Eigenvalues of P (complex plane)');
-    grid on;
-    xlim([-1.2 1.2]);
-    ylim([-1.2 1.2]);
-    hold off;
+for k = 1:min(nLabel, N)
+    lam = eigvals(k);
+    text(real(lam)+0.03, imag(lam)+0.03, sprintf('\\lambda_{%d}', k), ...
+        'FontSize', 10);
+end
 
-    % --- Right panel: |lambda| sorted, descending ---
-    subplot(1,2,2);
-    mags = abs(eigvals);
-    bar(mags, 'FaceColor', [0.2 0.4 0.8]);
-    xlabel('Index k (sorted by |\lambda_k|, descending)');
-    ylabel('|\lambda_k|');
-    title('Eigenvalue Magnitudes');
-    ylim([0 1.05]);
-    grid on;
+axis equal;
+xlabel('Re(\lambda)');
+ylabel('Im(\lambda)');
+title('Eigenvalues of P (complex plane)');
+grid on;
+xlim([-1.2 1.2]);
+ylim([-1.2 1.2]);
+hold off;
 
-    for k = 1:min(nLabel, N)
-        text(k, mags(k)+0.03, sprintf('%.3f', mags(k)), ...
-            'HorizontalAlignment','center', 'FontSize', 9);
-    end
+% --- middle panel: |lambda| sorted, descending ---
+subplot(1,3,2);
+mags = abs(eigvals);
+bar(mags, 'FaceColor', [0.2 0.4 0.8]);
+xlabel('Index k (sorted by |\lambda_k|, descending)');
+ylabel('|\lambda_k|');
+title('Eigenvalue Magnitudes');
+ylim([0 1.05]);
+grid on;
 
-    sgtitle('TPM Spectrum: look for gaps suggesting natural cluster counts');
+for k = 1:min(nLabel, N)
+    text(k, mags(k)+0.03, sprintf('%.3f', mags(k)), ...
+        'HorizontalAlignment','center', 'FontSize', 9);
+end
+
+sgtitle('TPM Spectrum: look for gaps suggesting natural cluster counts');
+
+% --- right panel:     % Relaxation timescales (skip eigenvalue 1 = stationary)
+
+subplot(1,3,3);
+mags = abs(eigvals);
+bar(mags, 'FaceColor', [0.2 0.4 0.8]);
+
+tauRelax = -1 ./ log(mags(2:end));
+tauRelax(isinf(tauRelax)) = NaN;
+
+bar(2:length(tauRelax)+1, tauRelax/fps, 'FaceColor', [0.2 0.4 0.8]);
+
+xlabel('eigenvalue #');
+ylabel('Relaxation timescale (sec)');
+title('Implied timescales  \tau = -1/log|\lambda|'); grid on;
+
+set(gcf, 'pos', [ 614   818   946   420])
 end

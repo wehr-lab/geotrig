@@ -96,7 +96,7 @@ function plot_occupancy_over_time(P, T, varargin)
         end
         xlabel('Time, s');
         ylabel('P(X_t = state)');
-        title('State Occupancy Over Time');
+        title(sprintf('State Occupancy Over Time, starting from  %s', stateNames{find(pi0)}), 'Interpreter','none','FontSize',9);
         legend(stateNames, 'Location', 'eastoutside');
         grid on;
         ylim([0 1]);
