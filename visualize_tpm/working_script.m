@@ -80,5 +80,3 @@ rt_clusterA = plot_return_time_distribution(P, i, 'partition', partition, 'traj'
 
 
 
-
-

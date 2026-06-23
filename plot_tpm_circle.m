@@ -80,7 +80,7 @@ function plot_tpm_circle(P, stateNames, opts)
         % Place label slightly outside the circle so it doesn't overlap arrows
         lx = x(i) * 1.18;
         ly = y(i) * 1.18;
-        text(lx, ly, stateNames{i}, 'HorizontalAlignment','center', ...
+        text(lx, ly, stateNames{i}, 'HorizontalAlignment','center', 'interpreter', 'none',...
             'VerticalAlignment','middle', 'FontWeight','bold', 'FontSize', 11);
     end
 

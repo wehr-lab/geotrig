@@ -1,4 +1,4 @@
-%example working script
+cd visualize_tpm/%example working script
 
 % clear
 close all
