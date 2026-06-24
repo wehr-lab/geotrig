@@ -14,7 +14,7 @@ if 0
 
 end
 
-if 0
+if 1
 
     %% detect events
     cricket_jump_event_frames=detect_cricketjump(cricket_spd, metadata, localframe, filename);
@@ -88,6 +88,35 @@ fprintf('\nremoved all overlapping hotpursuit/chase/follow frames, they are now 
 [noneoftheabove, noneoftheabove_start_frames, noneoftheabove_end_frames]=detect_noneoftheabove(hotpursuit, chase, follow, pause, stalk, wander);
 
 
+% regenerate start and end frames now that overlaps are removed
+hotpursuit_start_frames=find(diff(hotpursuit)==1);
+chase_start_frames=find(diff(chase)==1);
+follow_start_frames=find(diff(follow)==1);
+stalk_start_frames=find(diff(stalk)==1);
+wander_start_frames=find(diff(wander)==1);
+pause_start_frames=find(diff(pause)==1);
+noneoftheabove_start_frames=find(diff(noneoftheabove)==1);
+
+hotpursuit_end_frames=find(diff(hotpursuit)==-1);
+chase_end_frames=find(diff(chase)==-1);
+follow_end_frames=find(diff(follow)==-1);
+stalk_end_frames=find(diff(stalk)==-1);
+wander_end_frames=find(diff(wander)==-1);
+pause_end_frames=find(diff(pause)==-1);
+noneoftheabove_end_frames=find(diff(noneoftheabove)==-1);
+fprintf('\nregenerated start and end frames');
+fprintf('\ncounts:')
+fprintf('\nhotpursuit: %d', length( hotpursuit_end_frames));
+fprintf('\nchase: %d', length( chase_end_frames));
+fprintf('\nfollow: %d', length( follow_end_frames));
+fprintf('\nstalk: %d', length( stalk_end_frames));
+fprintf('\nwander: %d', length( wander_end_frames));
+fprintf('\npause: %d', length( pause_end_frames));
+fprintf('\nnoneoftheabove: %d', length( noneoftheabove_end_frames));
+
+
+
+
 if 0
 %% save events and states to csv
 
@@ -156,7 +185,6 @@ if 0
         'noneoftheabove_end_frames'  });
     writetable(eventsTable, '/Volumes/Projects/PreyCapture/ZIActivation/geo-trig-analysis-output/mike''s states and events/events.csv' );
 
-
     % State logicals → one rectangular CSV
     stateTable=table(contact(:),...
         pause(:),...
@@ -184,7 +212,7 @@ end
 
 %% compute and plot TPM
 
-fig=figure
+fig=figure;
 tiledlayout(1,3, "TileSpacing","compact")
 set(gcf, "Position", [440 880 1530 420])
 
@@ -357,6 +385,24 @@ hTPMlight.XDisplayData = hTPM.XData(orderColsdark);
 clmax=max([clim(hTPMlight) clim(hTPMdark)]);
 clim(hTPMdark, [0 clmax])
 clim(hTPMlight, [0 clmax])
+
+%plot without clustering
+figure
+tiledlayout(1,2, "TileSpacing","compact")
+set(gcf, "Position", [440 880 1100 420])
+nexttile
+hTPMdark_uc=heatmap(statenames, statenames, TPMdark, ...
+    'Title', ['TPM dark, no clustering'], ...
+    'Colormap', parula, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
+xlabel('To State')
+ylabel('From State')
+nexttile
+hTPMlight_uc=heatmap(statenames, statenames, TPMlight, ...
+    'Title', ['TPM light, no clustering'], ...
+    'Colormap', parula, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
+xlabel('To State')
+ylabel('From State')
+colormap hot;
 
 
 
