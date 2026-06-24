@@ -40,6 +40,12 @@ dataframe = readtable(dataframefilename,opts, ReadRowNames=true, ReadVariableNam
 
 metadata=readtable('metadata_alltrials.csv','Delimiter',',');
 
+% exclude mice
+mouse2exclude='mouse-1337';
+frames2exclude=find(contains(dataframe.filename, mouse2exclude));
+dataframe=dataframe(setdiff(1:height(dataframe), frames2exclude), :);
+fprintf('\nexcluding %s from dataframe; deleting %d frames', mouse2exclude, length(frames2exclude))
+
 num_geoframes=height(dataframe);
 az=dataframe.az;
 range=dataframe.dist;
@@ -48,7 +54,7 @@ mouse_spd=dataframe.mouse_spd;
 localframe=dataframe.localframe;
 filename=dataframe.filename;
 elapsed_time=toc;
-fprintf('done. read %d frames in %.1fmin', num_geoframes, elapsed_time/60)
+fprintf('\ndone. read %d frames in %.1fmin', num_geoframes, elapsed_time/60)
 %keyboard
 
 %%%%%%%%%%%%%%%

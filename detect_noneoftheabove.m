@@ -24,6 +24,9 @@ noneoftheabove_end_frames=find(diff(noneoftheabove)==-1);
 if noneoftheabove(end)==1
     noneoftheabove_end_frames=[noneoftheabove_end_frames; length(noneoftheabove)];
 end
+if noneoftheabove(1)==1
+    noneoftheabove_start_frames=[1; noneoftheabove_start_frames];
+end
 
 fprintf('\nfound %d noneoftheabove epochs, total of %d frames (%.0f%%)', length(noneoftheabove_start_frames), sum(noneoftheabove), 100*sum(noneoftheabove)/length(noneoftheabove))
 
