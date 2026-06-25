@@ -51,4 +51,10 @@ keepidx=find(wander_durs>=min_wander_dur);
 wander_start_frames=wander_start_frames(keepidx);
 wander_end_frames=wander_end_frames(keepidx);
 wander_durs=wander_durs(keepidx);
+
+% regenerate  from start/end frames, keeping only valid durations
+wander=zeros(size(mouse_spd)); %initialize to zero
+for i=1:length(wander_start_frames)
+    wander(wander_start_frames(i):wander_end_frames(i))=1;
+end
 fprintf('\nafter excluding wanders <%d frames, kept %d wanders, min duration %d frames (mean %.0f)', min_wander_dur, length(wander_durs),  min(wander_durs), mean(wander_durs))

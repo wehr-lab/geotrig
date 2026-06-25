@@ -58,4 +58,10 @@ keepidx=find(stalk_durs>=min_stalk_dur);
 stalk_start_frames=stalk_start_frames(keepidx);
 stalk_end_frames=stalk_end_frames(keepidx);
 stalk_durs=stalk_durs(keepidx);
+% regenerate  from start/end frames, keeping only valid durations
+stalk=zeros(size(mouse_spd)); %initialize to zero
+for i=1:length(stalk_start_frames)
+    stalk(stalk_start_frames(i):stalk_end_frames(i))=1;
+end
+
 fprintf('\nafter excluding stalks <%d frames, kept %d stalks, min duration %d frames (mean %.0f)', min_stalk_dur, length(stalk_durs),  min(stalk_durs), mean(stalk_durs))

@@ -2,11 +2,20 @@
 
 if 0
     %% load geos from dataframe
-    dataroot= '/Volumes/Projects/PreyCapture/ZIActivation';
-    dataframefilename = 'geos_allmice_alltrials_wfames.csv';
-    outputrootdir= '/Volumes/Projects/PreyCapture/ZIActivation/geo-trig-analysis-output';
-    [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe(dataroot, dataframefilename);
-    cd '/Users/wehr/Documents/Projects/Molly Shallow'
+    if ispc
+        dataroot= '\\wehr-nas.uoregon.edu\Projects\PreyCapture\ZIActivation';
+        dataframefilename = 'geos_allmice_alltrials_wfames.csv';
+        outputrootdir= '\\wehr-nas.uoregon.edu\Projects\PreyCapture\ZIActivation\geo-trig-analysis-output';
+        [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe(dataroot, dataframefilename);
+        cd 'C:\Users\wehrlab\Desktop\test_tpm'
+
+    else
+        dataroot= '/Volumes/Projects/PreyCapture/ZIActivation';
+        dataframefilename = 'geos_allmice_alltrials_wfames.csv';
+        outputrootdir= '/Volumes/Projects/PreyCapture/ZIActivation/geo-trig-analysis-output';
+        [az, range, localframe, cricket_spd, mouse_spd, filename, num_geoframes, metadata] = geotrig_load_dataframe(dataroot, dataframefilename);
+        cd '/Users/wehr/Documents/Projects/Molly Shallow'
+    end
 
     cricket_present=get_cricket_present_frames(metadata, localframe, num_geoframes, filename);
     [lightdark light dark] = get_lightdark(filename, localframe, num_geoframes, metadata);
@@ -214,7 +223,7 @@ end
 
 fig=figure;
 tiledlayout(1,3, "TileSpacing","compact")
-set(gcf, "Position", [440 880 1530 420])
+set(gcf, "Position", [440 440 1530 420])
 
 %filter by condition
 for c=1:2
@@ -341,7 +350,7 @@ for c=1:2
         statecounts(i) = length(starts);
     end
     figure
-    bar(statenames, statecounts)
+    bar(categorical(statenames), statecounts)
     ylabel('state counts')
     title(condition_name)
 
@@ -371,7 +380,7 @@ figure(fig);
 nexttile
 hTPM=heatmap(statenames, statenames, TPMdark-TPMlight, ...
     'Title', sprintf('Behavioral Transition Probabilities (rows sum to 1), %s - %s', condition_names{1}, condition_names{2} ), ...
-    'Colormap', redbluecmap, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
+    'Colormap', blue_to_red, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
 xlabel('To State')
 ylabel('From State')
 cl=clim;
@@ -389,13 +398,16 @@ clim(hTPMlight, [0 clmax])
 %plot without clustering
 figure
 tiledlayout(1,2, "TileSpacing","compact")
-set(gcf, "Position", [440 880 1100 420])
+set(gcf, "Position", [440 440 1100 420])
 nexttile
 hTPMdark_uc=heatmap(statenames, statenames, TPMdark, ...
     'Title', ['TPM dark, no clustering'], ...
     'Colormap', parula, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
 xlabel('To State')
 ylabel('From State')
+hTPMdark_uc.YDisplayData = hTPMdark_uc.YData(1:6);
+hTPMdark_uc.XDisplayData = hTPMdark_uc.XData(1:6);
+
 nexttile
 hTPMlight_uc=heatmap(statenames, statenames, TPMlight, ...
     'Title', ['TPM light, no clustering'], ...
@@ -403,6 +415,8 @@ hTPMlight_uc=heatmap(statenames, statenames, TPMlight, ...
 xlabel('To State')
 ylabel('From State')
 colormap hot;
+hTPMlight_uc.YDisplayData = hTPMlight_uc.YData(1:6);
+hTPMlight_uc.XDisplayData = hTPMlight_uc.XData(1:6);
 
 
 
@@ -420,7 +434,7 @@ plot_tpm_circle(TPMlight, statenames, opts)
 %% bar graph of dark-light state counts
 figure
 diffs = statecountsdark - statecountslight;
-b = bar(statenames, diffs);
+b = bar(categorical(statenames), diffs);
 b.FaceColor = 'flat';
 b.CData = (diffs' <= 0) * [0 0 1] + (diffs' > 0) * [1 0 0];
 ylabel('dark-light state count diffs')

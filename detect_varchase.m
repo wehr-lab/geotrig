@@ -17,9 +17,14 @@ min_chase_dur=.5*200; %in frames (seconds*200fps)
 tic
 fprintf('\ndetecting chase... ')
 
-medfilt_mouse_spd = medfilt1(mouse_spd, chase_winsize, 'omitnan');
-medfilt_az = medfilt1(az, chase_winsize, 'omitnan');
-medfilt_range = medfilt1(range, chase_winsize, 'omitnan');
+ medfilt_mouse_spd = medfilt1(mouse_spd, chase_winsize, 'omitnan');
+ medfilt_az = medfilt1(az, chase_winsize, 'omitnan');
+ medfilt_range = medfilt1(range, chase_winsize, 'omitnan');
+
+% medfilt_mouse_spd = medfilt1(mouse_spd, chase_winsize);
+% medfilt_az = medfilt1(az, chase_winsize);
+% medfilt_range = medfilt1(range, chase_winsize);
+
 %medfilt is fast (<<1s) and by doing it here, we can use a chase-detection specific winsize 
 
 chase=zeros(size(mouse_spd)); %initialize to zero
@@ -55,4 +60,10 @@ keepidx=find(chase_durs>=min_chase_dur);
 chase_start_frames=chase_start_frames(keepidx);
 chase_end_frames=chase_end_frames(keepidx);
 chase_durs=chase_durs(keepidx);
+% regenerate chase from start/end frames, keeping only valid durations
+chase=zeros(size(mouse_spd)); %initialize to zero
+for i=1:length(chase_start_frames)
+    chase(chase_start_frames(i):chase_end_frames(i))=1;
+end
+
 fprintf('\nafter excluding chases <%d frames, kept %d chases, min duration %d frames (mean %.0f)', min_chase_dur, length(chase_durs),  min(chase_durs), mean(chase_durs))
