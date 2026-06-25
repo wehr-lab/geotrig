@@ -5,11 +5,11 @@ function [wander, wander_start_frames, wander_end_frames, wander_durs]=detect_wa
 % also returns wander_start_frames and wander_end_frames as events, and wander_durs 
 
 % params:
-wander_speed_thresh=[5 15]; %[min max]  cm/s
-wander_range_thresh= 15; % min,  cm
+wander_speed_thresh=[2 15]; %[min max]  cm/s
+wander_range_thresh= 20; % min,  cm
 wander_az_thresh=30; %min, in degrees
 wander_winsize=1*200; %in frames (seconds*200fps)
-min_wander_dur=1*200; %in frames (seconds*200fps)
+min_wander_dur=.5*200; %in frames (seconds*200fps)
 
 
 tic

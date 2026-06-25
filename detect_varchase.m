@@ -10,12 +10,12 @@ function [chase, chase_start_frames, chase_end_frames, chase_durs]=detect_varcha
 % also returns chase_start_frames and chase_end_frames as events, and chase_durs 
 
 % params:
-chase_winsize=.5*200; %in frames (seconds*200fps)
+chase_winsize=.25*200; %in frames (seconds*200fps)
 min_chase_dur=.1*200; %in frames (seconds*200fps)
 
 
 tic
-fprintf('\ndetecting chase... ')
+fprintf('\ndetecting chase with mouse_spd in [%d %d] ... ', chase_speed_thresh(1), chase_speed_thresh(2))
 
  medfilt_mouse_spd = medfilt1(mouse_spd, chase_winsize, 'omitnan');
  medfilt_az = medfilt1(az, chase_winsize, 'omitnan');

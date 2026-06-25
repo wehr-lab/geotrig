@@ -13,8 +13,8 @@
 % first pass to establish whether events matter before building anything
 % fancier.
 
-%statenames = {'hot pursuit','chase','following','stalk','wander','pause'};
-statenames = {'chase','stalk','wander','pause'};
+statenames = {'hot pursuit','chase','following','stalk','wander','pause'};
+%statenames = {'chase','stalk','wander','pause'};
 eventnames = {'failed_approach','contact_loss','contact_gain','intercept','cricket_jump', 'rangemin'};
 
 nStates = numel(statenames);
@@ -26,8 +26,8 @@ nEvents = numel(eventnames);
 % eventFrames : cell array, eventFrames{e} = list of frame indices for event e
 % fps : frame rate (for converting window to frames), or just set winFrames directly
 
-%stateMask = [    hotpursuit(:),chase(:),follow(:), stalk(:), wander(:), pause(:)];
-stateMask = [  chase(:), stalk(:), wander(:), pause(:)];
+stateMask = [    hotpursuit(:),chase(:),follow(:), stalk(:), wander(:), pause(:)];
+%stateMask = [  chase(:), stalk(:), wander(:), pause(:)];
 size(stateMask)
 fps=200;
 
@@ -55,6 +55,7 @@ stateSeq(~any(stateMask,2)) = 0;
 fromSeq = stateSeq(1:end-1);
 toSeq   = stateSeq(2:end);
 validTrans = fromSeq>0 & toSeq>0;  % exclude frames where no state active
+%note that this excludes transitions to/from "none of the above"
 
 % Baseline TPM (all valid transitions)
 TPM_baseline = computeTPM(fromSeq(validTrans), toSeq(validTrans), nStates);

@@ -38,10 +38,11 @@ stateMask = [    hotpursuit(:),chase(:),follow(:),...
     stalk(:), wander(:), pause(:)];
 fps=200;
 
-%pp_summary(eventFrames, eventnames, stateMask, statenames, num_frames, fps)
+pp_summary(eventFrames, eventnames, stateMask, statenames, num_frames, fps)
+return
 
 pp_state_rates(eventFrames, eventnames, stateMask, statenames, fps);
-return
+
 
 pp_crossintensity(eventFrames, eventnames, num_frames, fps);
 
