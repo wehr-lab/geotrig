@@ -44,9 +44,9 @@ end
 
 azvalues=[0 30];
 rangevalues = [5 20];
-speedvalues_hotpursuit = [30 50];
-speedvalues_chase = [20 30];
-speedvalues_follow = [5 20];
+speedvalues_hotpursuit = [100 150];
+speedvalues_chase = [5 50];
+speedvalues_follow = [150 200];
 
 [hotpursuit, hotpursuit_start_frames, hotpursuit_end_frames, hotpursuit_durs]=detect_varchase(...
     cricket_present, mouse_spd, range, az, speedvalues_hotpursuit, rangevalues, azvalues);
@@ -238,9 +238,9 @@ for c=1:2
    
 
     states = {...
-        hotpursuit_start_frames(find(condition(hotpursuit_start_frames))), ...
+        ...%hotpursuit_start_frames(find(condition(hotpursuit_start_frames))), ...
         chase_start_frames(find(condition(chase_start_frames))), ...
-        follow_start_frames(find(condition(follow_start_frames))), ...
+        ...%follow_start_frames(find(condition(follow_start_frames))), ...
         stalk_start_frames(find(condition(stalk_start_frames))), ...
         wander_start_frames(find(condition(wander_start_frames))), ...
         pause_start_frames(find(condition(pause_start_frames))), ...
@@ -249,9 +249,9 @@ for c=1:2
     num_states = length(states); % Chase, Pause, Wander, etc.
 
     statenames={ ...
-        'hot pursuit' , ...
+        ...%'hot pursuit' , ...
         'chase' , ...
-        'following' , ...
+        ...%'following' , ...
         'stalk' , ...
         'wander' , ...
         'pause' , ...
@@ -405,8 +405,8 @@ hTPMdark_uc=heatmap(statenames, statenames, TPMdark, ...
     'Colormap', parula, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
 xlabel('To State')
 ylabel('From State')
-hTPMdark_uc.YDisplayData = hTPMdark_uc.YData(1:6);
-hTPMdark_uc.XDisplayData = hTPMdark_uc.XData(1:6);
+%hTPMdark_uc.YDisplayData = hTPMdark_uc.YData(1:6);
+%hTPMdark_uc.XDisplayData = hTPMdark_uc.XData(1:6);
 
 nexttile
 hTPMlight_uc=heatmap(statenames, statenames, TPMlight, ...
@@ -415,8 +415,8 @@ hTPMlight_uc=heatmap(statenames, statenames, TPMlight, ...
 xlabel('To State')
 ylabel('From State')
 colormap hot;
-hTPMlight_uc.YDisplayData = hTPMlight_uc.YData(1:6);
-hTPMlight_uc.XDisplayData = hTPMlight_uc.XData(1:6);
+% hTPMlight_uc.YDisplayData = hTPMlight_uc.YData(1:6);
+% hTPMlight_uc.XDisplayData = hTPMlight_uc.XData(1:6);
 
 
 
@@ -441,25 +441,25 @@ ylabel('dark-light state count diffs')
 title('dark-light')
 
 figure
-b = bar(statenames, [ statecountsdark; statecountslight]);
+b = bar(categorical(statenames), [ statecountsdark; statecountslight]);
 ylabel(' state counts ')
 title('dark vs light')
 legend('dark', 'light', 'location', 'northwest')
 
-%% plot eigenspectrum
-plot_tpm_spectrum(TPMdark)
-
-%% plot State probability trajectories from each starting state
-
-%plot for a specific initial condition, such as pause
-pi0=contains(statenames, 'pause'); %0s for all states except 1 at the match
-numsteps=200;
-plot_occupancy_over_time(TPMdark, numsteps,    'stateNames', statenames, 'pi0', pi0);
-
-%plot for each  initial condition
-for i=1:length(statenames)
-    pi0=zeros(size(statenames));
-    pi0(i)=1;
-    plot_occupancy_over_time(TPMdark, numsteps,    'stateNames', statenames, 'pi0', pi0);
-end
-
+% %% plot eigenspectrum
+% plot_tpm_spectrum(TPMdark)
+% 
+% %% plot State probability trajectories from each starting state
+% 
+% %plot for a specific initial condition, such as pause
+% pi0=contains(statenames, 'pause'); %0s for all states except 1 at the match
+% numsteps=200;
+% plot_occupancy_over_time(TPMdark, numsteps,    'stateNames', statenames, 'pi0', pi0);
+% 
+% %plot for each  initial condition
+% for i=1:length(statenames)
+%     pi0=zeros(size(statenames));
+%     pi0(i)=1;
+%     plot_occupancy_over_time(TPMdark, numsteps,    'stateNames', statenames, 'pi0', pi0);
+% end
+% 

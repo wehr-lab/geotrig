@@ -13,7 +13,8 @@
 % first pass to establish whether events matter before building anything
 % fancier.
 
-statenames = {'hot pursuit','chase','following','stalk','wander','pause'};
+%statenames = {'hot pursuit','chase','following','stalk','wander','pause'};
+statenames = {'chase','stalk','wander','pause'};
 eventnames = {'failed_approach','contact_loss','contact_gain','intercept','cricket_jump', 'rangemin'};
 
 nStates = numel(statenames);
@@ -25,8 +26,8 @@ nEvents = numel(eventnames);
 % eventFrames : cell array, eventFrames{e} = list of frame indices for event e
 % fps : frame rate (for converting window to frames), or just set winFrames directly
 
-stateMask = [    hotpursuit(:),chase(:),follow(:),...
-    stalk(:), wander(:), pause(:)];
+%stateMask = [    hotpursuit(:),chase(:),follow(:), stalk(:), wander(:), pause(:)];
+stateMask = [  chase(:), stalk(:), wander(:), pause(:)];
 size(stateMask)
 fps=200;
 
