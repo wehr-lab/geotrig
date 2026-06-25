@@ -58,6 +58,13 @@ keepidx=find(pause_durs>=min_pause_dur);
 pause_start_frames=pause_start_frames(keepidx);
 pause_end_frames=pause_end_frames(keepidx);
 pause_durs=pause_durs(keepidx);
+
+% regenerate  from start/end frames, keeping only valid durations
+pause=zeros(size(mouse_spd)); %initialize to zero
+for i=1:length(pause_start_frames)
+    pause(pause_start_frames(i):pause_end_frames(i))=1;
+end
+
 fprintf('\nafter excluding pauses <%d frames, kept %d pauses, min duration %d frames (mean %.0f)', min_pause_dur, length(pause_durs),  min(pause_durs), mean(pause_durs))
 
 
