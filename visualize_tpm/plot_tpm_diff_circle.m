@@ -118,7 +118,7 @@ for i = 1:nStates
                'Curvature',1, 'FaceColor','w', 'EdgeColor','k', 'LineWidth',1.2);
     labelPos = xy(i,:) * 1.28;
     text(labelPos(1), labelPos(2), statenames{i}, ...
-        'HorizontalAlignment','center', 'VerticalAlignment','middle', 'FontSize',10);
+        'HorizontalAlignment','center', 'VerticalAlignment','middle', 'FontSize',10, 'interpreter', 'none');
 end
 
 xlim([-1.5 1.5]); ylim([-1.5 1.5]);

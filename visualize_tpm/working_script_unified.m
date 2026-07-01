@@ -13,7 +13,7 @@
 % hawkes_params are loaded from geotrig/datacache
   load /Users/wehr/Documents/Analysis/geotrig/datacache 
 
-TPM=TPMdark;
+TPM=results(3).TPM; %dark laser off
 statenames = {'hot pursuit','chase','following','stalk','wander','pause'};
 eventnames = {'failed_approach','contact_loss', ...
     'contact_gain','intercept','cricket_jump','rangemin'};
@@ -50,6 +50,13 @@ plot_unified_interaction(TPM, statenames, hawkes_params, eventnames, ...
     'StateEvent_thresh', 1, ... %blue
     'EventState_thresh', 0.02); %red
 
+%%
+plot_unified_interaction(TPM, statenames, hawkes_params, eventnames, ...
+    stateRates, glmResults, eventStateJS, ...
+    'TPM_thresh', inf, ... %black
+    'Hawkes_thresh', inf, ... %orange
+    'StateEvent_thresh', 1, ... %darkblue=enriched, lightblue = depleted
+    'EventState_thresh', .02); %red
 
 
 

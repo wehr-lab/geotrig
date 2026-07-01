@@ -15,9 +15,9 @@
 
 % /Applications/MATLAB_R2023b.app/bin/matlab  -nodisplay -nodesktop -sd /Users/wehr/Documents/Analysis/geotrig -batch "pp_analysis_suite" -logfile /Users/wehr/Documents/Analysis/geotrig/pplog.txt
 
-% save /Users/wehr/Documents/Analysis/geotrig/datacache num_frames   failed_approach_event_frames  target_loss_event_frames contact_loss_event_frames  ...
-%     contact_gain_event_frames intercept_event_frames cricket_jump_event_frames rangemin_event_frames  ...
-%     hotpursuit chase follow stalk  wander  pause;
+  % save /Users/wehr/Documents/Analysis/geotrig/datacache num_frames   failed_approach_event_frames  target_loss_event_frames contact_loss_event_frames  ...
+  %     contact_gain_event_frames intercept_event_frames cricket_jump_event_frames rangemin_event_frames  ...
+  %     hotpursuit chase follow stalk  wander  pause dark light laseron;
 
 if exist('hotpursuit')~=1
     load ~/Documents/Analysis/geotrig/datacache
@@ -38,32 +38,112 @@ stateMask = [    hotpursuit(:),chase(:),follow(:),...
     stalk(:), wander(:), pause(:)];
 fps=200;
 
-pp_summary(eventFrames, eventnames, stateMask, statenames, num_frames, fps)
-return
+%% =========================================================================
+%  CONDITION FILTER
+%  Define your condition logicals (length = num_frames):
+%    dark, light, laseron, laseroff
+%
+%  Set active_condition to whichever you want to analyze,
+%  or [] to use all frames.
+% =========================================================================
 
+% active_condition = dark & ~laseron;   % <-- change this: dark / light / laseron / laseroff / []
+ % condition_name='dark & laseron'
+ condition_name='light & laseron'
+% condition_name='dark & ~laseron'
+% condition_name='light & ~laseron'
+active_condition=eval(condition_name);
+
+if ~isempty(active_condition)
+    condFrames = find(active_condition);  % frame indices where condition is true
+
+    % Filter stateMask
+    stateMask_filt = stateMask(condFrames, :);
+
+    % Filter eventFrames: keep only events that fall within condition frames
+    % and re-index them to be contiguous (1:numel(condFrames))
+    frameMap = zeros(num_frames, 1);
+    frameMap(condFrames) = 1:numel(condFrames);  % old frame -> new frame index
+
+    eventFrames_filt = cell(size(eventFrames));
+    for e = 1:nEvents
+        ef = eventFrames{e};
+        ef = ef(active_condition(ef) == 1);   % keep only events in condition
+        eventFrames_filt{e} = frameMap(ef);   % re-index to filtered frame space
+    end
+
+    num_frames_filt = numel(condFrames);
+    num_frames = numel(dark);
+
+    fprintf('Condition filter active: %d/%d frames retained (%.1f%%)\n', ...
+        num_frames_filt, num_frames, 100*num_frames_filt/num_frames);
+else
+    stateMask_filt   = stateMask;
+    eventFrames_filt = eventFrames;
+    num_frames_filt  = num_frames;
+    fprintf('No condition filter — using all %d frames\n', num_frames);
+end
+
+% From here, pass *_filt variables to all analysis functions:
+%   pp_rate(eventFrames_filt, eventnames, num_frames_filt, fps, ...)
+%   pp_iei(eventFrames_filt, eventnames, fps, ...)
+%   pp_crossintensity(eventFrames_filt, eventnames, num_frames_filt, fps, ...)
+%   pp_state_rates(eventFrames_filt, eventnames, stateMask_filt, statenames, fps, ...)
+%   pp_glm(eventFrames_filt, eventnames, stateMask_filt, statenames, num_frames_filt, fps, ...)
+%   pp_hawkes_fit(eventFrames_filt, eventnames, num_frames_filt, fps, ...)
+% =========================================================================
+
+stateMask = stateMask_filt   ;
+eventFrames = eventFrames_filt ;
+num_frames = num_frames_filt  ;
+
+
+%pp_summary(eventFrames, eventnames, stateMask, statenames, num_frames, fps)
+
+fprintf('Computing state-conditional event rates...\n');
 pp_state_rates(eventFrames, eventnames, stateMask, statenames, fps);
 
+fprintf(' Fitting point process GLM...\n');
+pp_glm(eventFrames, eventnames, stateMask, statenames, num_frames, fps);
 
-pp_crossintensity(eventFrames, eventnames, num_frames, fps);
+fprintf(' Computing kernel-smoothed event rates...\n');
+pp_rate(eventFrames, eventnames, num_frames, fps);
 
-%run hawkes fit and similate, which are not run by pp_summary
-  hawkes_params = pp_hawkes_fit(eventFrames, eventnames, num_frames, fps);
-  save /Users/wehr/Documents/Analysis/geotrig/datacache hawkes_params -append
-% duration=100; %seconds
-% simTimes = pp_hawkes_simulate(hawkes_params, eventnames, duration);
-pp_hawkes_plot( eventnames, hawkes_params)
+fprintf(' Computing inter-event interval distributions...\n');
+pp_iei(eventFrames, eventnames, fps);
 
+ fprintf(' Computing cross-intensity functions...\n');
+% pp_crossintensity(eventFrames, eventnames, num_frames, fps);
 
-%print to pdf
-f=findobj('type', 'figure');
-pdffilename=sprintf('~/Documents/Analysis/geotrig/pp_analysis-figs-%s.pdf', replace(datestr(now), whitespacePattern, '-'));
-fprintf('\nprinting %d figures to %s\n', length(f), pdffilename)
-for idx=1:length(f)
-    builtin('pause',.5)
-    exportgraphics(f(idx),pdffilename,'Append',true)
-    builtin('pause',.5)
-    fprintf('.')
+if 1
+    %run hawkes fit and similate, which are not run by pp_summary
+
+    hawkes_params = pp_hawkes_fit(eventFrames, eventnames, num_frames, fps);
+    outfilename=sprintf('~/Documents/Analysis/geotrig/pp_analysis-output-%s.mat', replace(datestr(now), whitespacePattern, '-'));
+
+    save(outfilename, 'hawkes_params', 'condition_name')
+    % duration=100; %seconds
+    % simTimes = pp_hawkes_simulate(hawkes_params, eventnames, duration);
 end
+ 
+ pp_hawkes_plot( eventnames, hawkes_params, condition_name)
+
+
+
+
+
+ %print to pdf
+ if 1
+     f=findobj('type', 'figure');
+     pdffilename=sprintf('~/Documents/Analysis/geotrig/pp_analysis-figs-%s.pdf', replace(datestr(now), whitespacePattern, '-'));
+     fprintf('\nprinting %d figures to %s\n', length(f), pdffilename)
+     for idx=1:length(f)
+         builtin('pause',.5)
+         exportgraphics(f(idx),pdffilename,'Append',true)
+         builtin('pause',.5)
+         fprintf('.')
+     end
+ end
 fprintf('done\n')
 
 % =========================================================================
@@ -77,6 +157,7 @@ fprintf('done\n')
 %  7.  pp_glm              — point process GLM (event rate ~ history + state)
 %  8.  pp_summary          — run and plot all of the above
 % =========================================================================
+
 
 
 %% =========================================================================
@@ -407,8 +488,9 @@ end
 
 
 %% =========================================================================
-function  pp_hawkes_plot( eventnames, params)
+function  pp_hawkes_plot( eventnames, params, varargin)
 %just the plot from hawkes_fit without the fitting
+if nargin==3 condition_name=varargin{1}; else condition_name=''; end
 nE = numel(eventnames);
     figure('Position',[100 100 1300 430]);
     tiledlayout(1,3,'TileSpacing','compact','Padding','compact');
@@ -417,20 +499,22 @@ nE = numel(eventnames);
     imagesc(params.alpha); colorbar;
     set(gca,'XTick',1:nE,'XTickLabel',eventnames,'XTickLabelRotation',40,...
             'YTick',1:nE,'YTickLabel',eventnames,'TickLabelInterpreter','none');
-    title('\alpha  (excitation amplitude)'); colormap(hot);
+    title(sprintf('\alpha  (excitation amplitude) %s', condition_name));
+    colormap(hot);
 
     nexttile;
     imagesc(1./params.beta); colorbar;
     set(gca,'XTick',1:nE,'XTickLabel',eventnames,'XTickLabelRotation',40,...
             'YTick',1:nE,'YTickLabel',eventnames,'TickLabelInterpreter','none');
-    title('1/\beta  (decay timescale, s)'); colormap(hot);
+    title('1/\beta  (decay timescale, s)'); 
+    colormap(hot);
 
     nexttile;
     br = params.branchingRatio;
     imagesc(br, [0 1]); colorbar;
     set(gca,'XTick',1:nE,'XTickLabel',eventnames,'XTickLabelRotation',40,...
             'YTick',1:nE,'YTickLabel',eventnames,'TickLabelInterpreter','none');
-    title('\alpha/\beta  (branching ratio: fraction of triggered events)');
+    title(sprintf('\alpha/\beta  (branching ratio: fraction of triggered events)\n%s', condition_name));
     colormap(gca, hot);
     xlabel('triggering event')
     ylabel('received input')
@@ -444,7 +528,7 @@ fprintf(['\nρ(K) < 1 → the process is stationary; cascades die out', ...
 '\nρ(K) > 1 → explosive; the process is non-stationary']);
 
 opts.minProb=.2;
-opts.title='Event interactions (Hawkes model)';
+opts.title=sprintf('Event interactions (Hawkes model) %s', condition_name);
 plot_tpm_circle(params.branchingRatio', eventnames, opts)
 
 end

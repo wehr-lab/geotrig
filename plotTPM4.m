@@ -1,4 +1,18 @@
-% plotTPM
+% plotTPM4
+%modified from PlotTPM 6.29.26
+% using all frames (and thus dwell time i.e self-transitions) instead
+%of start frames/symbolic sequence
+%
+% well, what do you know. If you implicitly exclude none-of-the-above
+% states as 'stateMask is all zeros', and exclude self-transitions, it
+% gives you the EXACT same TPM as if you only count start frames and use a
+% symbolic sequence. Completely different core TPM code and algorithm gives
+% the exact same probabilities. That is reassuring. 
+% if you allow self-transitions (to see dwell time, line 215) then the
+% self-transitions all completely dominate the TPM (like, .999 or 1 vs
+% .00003)
+%
+% so this PlotTPM4 is completely unnecessary
 
 close all
 clear results
@@ -40,11 +54,9 @@ if 0
     failed_approach_event_frames=detect_failed_approach(approach_end_frames, range);
     intercept_event_frames=detect_intercepts(approach_end_frames, range);
     capture_frames=detect_capture(metadata, filename);
-    trial_durations=detect_trialdurs(metadata, filename);
 
 end
 
-fps=200;
 
 %% detect chase states by passing thresholds to detect_varchase
 
@@ -143,9 +155,6 @@ fprintf('\nnoneoftheabove: %d', length( noneoftheabove_end_frames));
 
 
 
-
-
-
 %% compute and plot TPM
 
 fig=figure;
@@ -177,20 +186,12 @@ for c=1:4
         condition=~laseron & light; condition_name='light laser off';
     end
 
-   
+   stateMask = [    hotpursuit(:),chase(:),follow(:), stalk(:), wander(:), pause(:)];
+%no need to include none-of-the-above as an explicit state, it is
+%implicitly accounted for when statemask(frame, :) is all zeros
+   stateMask=stateMask & condition;
 
-    states = {...
-        hotpursuit_start_frames(find(condition(hotpursuit_start_frames))), ...
-        chase_start_frames(find(condition(chase_start_frames))), ...
-        follow_start_frames(find(condition(follow_start_frames))), ...
-        stalk_start_frames(find(condition(stalk_start_frames))), ...
-        wander_start_frames(find(condition(wander_start_frames))), ...
-        pause_start_frames(find(condition(pause_start_frames))), ...
-        ...%capture_frames(find(condition(capture_frames))), ...
-        noneoftheabove_start_frames(find(condition(noneoftheabove_start_frames)))};
-  
-    num_states = length(states); % Chase, Pause, Wander, etc.
-
+   winFrames = 5*fps;   % post-event window length (e.g. 1 s at 30 fps) -- adjust as needed
     statenames={ ...
         'hot pursuit' , ...
         'chase' , ...
@@ -198,62 +199,104 @@ for c=1:4
         'stalk' , ...
         'wander' , ...
         'pause' , ...
-        ...%'capture', ...
-        'none'};
+        };
+num_frames = size(stateMask,1);
+nStates = size(stateMask,2);
+
+% Convert state mask to a single categorical sequence (1..nStates), 0 = none active
+stateSeq = zeros(num_frames,1);
+[hasState, stateSeq(stateSeq==0)] = max(stateMask,[],2);
+stateSeq(~any(stateMask,2)) = 0;
+
+%% Build baseline TPM (all transitions) and per-event post-event TPMs
+% Transitions occur between frame t and t+1
+fromSeq = stateSeq(1:end-1);
+toSeq   = stateSeq(2:end);
+validTrans = fromSeq>0 & toSeq>0;  % exclude frames where no state active
+%note that this excludes transitions to/from "none of the above" 
+
+%validTrans = fromSeq>0 & toSeq>0   & (fromSeq ~= toSeq);
+% exclude none-of-the-above transitions AND self-transitions
+
+% Baseline TPM (all valid transitions)
+TPM = computeTPM(fromSeq(validTrans), toSeq(validTrans), nStates);
 
 
-    % 1. Create a combined table of all events
-    all_events = [];
-    for i = 1:num_states % For each state
-        starts = states{i};
-        % Create array: [start_frame, state_ID]
-        all_events = [all_events; starts, i*ones(length(starts), 1)];
-    end
-
-
-    % 2. Sort events by start frame to get the chronological sequence
-    [~, idx] = sort(all_events(:, 1));
-    state_sequence = all_events(idx, 2);
-
-    %optional: eliminate Self-Transitions
-    % state_sequence = state_sequence(diff([0; state_sequence]) ~= 0);
-
-    T = zeros(num_states, num_states); % The raw count matrix
-
-    noneIdx=find(contains(statenames,'none'));
-    captureIdx=find(contains(statenames,'capture'));
-
-    % Count transitions
-    for i = 1:length(state_sequence) - 1
-        current_state = state_sequence(i);
-        next_state = state_sequence(i+1);
-        if current_state == noneIdx || next_state == noneIdx %skip counting none transitions
-            continue;
-        end
-        if current_state == captureIdx  %skip counting transitions from capture to anything
-            %(because capture terminates a trial)
-            continue;
-        end
-        
-        T(current_state, next_state) = T(current_state, next_state) + 1;
-    end
-
-    % Absorbing States: If a state never transitions to another state, the sum
-    % of that row will be zero, causing a division error. You can add a small
-    % "pseudocount" (Laplace smoothing) to every cell in T (e.g., T = T + 0.01)
-    % if you want to ensure the matrix is fully defined for sparse datasets.
-    % T = T + 0.01;
-
-    %exclude noneoftheabove state from further consideration
-    keepidx=setdiff(1:num_states, noneIdx);
-    T=T(keepidx, keepidx);
-    statenames=statenames(keepidx);
-    states=states(keepidx);
-    num_states = length(states);
-
-
-    % Normalize to probabilities (rows sum to 1)
-    TPM = T ./ sum(T, 2);
+    % % states = {...
+    % %     hotpursuit_start_frames(find(condition(hotpursuit_start_frames))), ...
+    % %     chase_start_frames(find(condition(chase_start_frames))), ...
+    % %     follow_start_frames(find(condition(follow_start_frames))), ...
+    % %     stalk_start_frames(find(condition(stalk_start_frames))), ...
+    % %     wander_start_frames(find(condition(wander_start_frames))), ...
+    % %     pause_start_frames(find(condition(pause_start_frames))), ...
+    % %     ...%capture_frames(find(condition(capture_frames))), ...
+    % %     noneoftheabove_start_frames(find(condition(noneoftheabove_start_frames)))};
+    % % 
+    % % num_states = length(states); % Chase, Pause, Wander, etc.
+    % % 
+    % % statenames={ ...
+    % %     'hot pursuit' , ...
+    % %     'chase' , ...
+    % %     'following' , ...
+    % %     'stalk' , ...
+    % %     'wander' , ...
+    % %     'pause' , ...
+    % %     ...%'capture', ...
+    % %     'none'};
+    % % 
+    % % 
+    % % % 1. Create a combined table of all events
+    % % all_events = [];
+    % % for i = 1:num_states % For each state
+    % %     starts = states{i};
+    % %     % Create array: [start_frame, state_ID]
+    % %     all_events = [all_events; starts, i*ones(length(starts), 1)];
+    % % end
+    % % 
+    % % 
+    % % % 2. Sort events by start frame to get the chronological sequence
+    % % [~, idx] = sort(all_events(:, 1));
+    % % state_sequence = all_events(idx, 2);
+    % % 
+    % % %optional: eliminate Self-Transitions
+    % % % state_sequence = state_sequence(diff([0; state_sequence]) ~= 0);
+    % % 
+    % % T = zeros(num_states, num_states); % The raw count matrix
+    % % 
+    % % noneIdx=find(contains(statenames,'none'));
+    % % captureIdx=find(contains(statenames,'capture'));
+    % % 
+    % % % Count transitions
+    % % for i = 1:length(state_sequence) - 1
+    % %     current_state = state_sequence(i);
+    % %     next_state = state_sequence(i+1);
+    % %     if current_state == noneIdx || next_state == noneIdx %skip counting none transitions
+    % %         continue;
+    % %     end
+    % %     if current_state == captureIdx  %skip counting transitions from capture to anything
+    % %         %(because capture terminates a trial)
+    % %         continue;
+    % %     end
+    % % 
+    % %     T(current_state, next_state) = T(current_state, next_state) + 1;
+    % % end
+    % % 
+    % % % Absorbing States: If a state never transitions to another state, the sum
+    % % % of that row will be zero, causing a division error. You can add a small
+    % % % "pseudocount" (Laplace smoothing) to every cell in T (e.g., T = T + 0.01)
+    % % % if you want to ensure the matrix is fully defined for sparse datasets.
+    % % % T = T + 0.01;
+    % % 
+    % % %exclude noneoftheabove state from further consideration
+    % % keepidx=setdiff(1:num_states, noneIdx);
+    % % T=T(keepidx, keepidx);
+    % % statenames=statenames(keepidx);
+    % % states=states(keepidx);
+    % % num_states = length(states);
+    % % 
+    % % 
+    % % % Normalize to probabilities (rows sum to 1)
+    % % TPM = T ./ sum(T, 2);
 
 
     figure(fig)
@@ -275,12 +318,12 @@ for c=1:4
     ylabel('From State')
 
 
-    figure;
-    hT=heatmap(statenames, statenames, T, ...
-        'Title', ['Behavioral Transition Counts, ', condition_name], ...
-        'Colormap', parula, 'GridVisible', 'off');
-    xlabel('To State')
-    ylabel('From State')
+    % figure;
+    % hT=heatmap(statenames, statenames, T, ...
+    %     'Title', ['Behavioral Transition Counts, ', condition_name], ...
+    %     'Colormap', parula, 'GridVisible', 'off');
+    % xlabel('To State')
+    % ylabel('From State')
 
 
     %hierarchical clustering
@@ -304,15 +347,15 @@ for c=1:4
     hTPM.Colormap=hot;
 
     % bar graph of counts of each state
-    clear statecounts
-    for i = 1:num_states % For each state
-        starts = states{i};
-        statecounts(i) = length(starts);
-    end
-    figure
-    bar((statenames), statecounts)
-    ylabel('state counts')
-    title(condition_name)
+    % clear statecounts
+    % for i = 1:nStates % For each state
+    %     starts = states{i};
+    %     statecounts(i) = length(starts);
+    % end
+    % figure
+    % bar((statenames), statecounts)
+    % ylabel('state counts')
+    % title(condition_name)
 
 
     %save results for plotting differences later, outside the loop
@@ -321,12 +364,12 @@ for c=1:4
     results(c).orderCols=orderCols;
     results(c).TPM=TPM;
     results(c).hTPM=hTPM;
-    results(c).statecounts=statecounts;
+    %results(c).statecounts=statecounts;
     results(c).condition_name=condition_name
 
 end
 
-%% plot dark-light-laser diffs
+%% plot dark-light diff
 
 figure;
 tiledlayout(2,2, "TileSpacing","compact")
@@ -348,57 +391,35 @@ for c=1:4
     ylabel('From State')
     cl=clim;
     clim(max(abs(cl))*[-1 1])
-    % cluster if desired:
-    % hTPM.YDisplayData = hTPM.YData(results(3).orderRows);
-    % hTPM.XDisplayData = hTPM.XData(results(3).orderCols);
+    hTPM.YDisplayData = hTPM.YData(results(3).orderRows);
+    hTPM.XDisplayData = hTPM.XData(results(3).orderCols);
     H(c)=hTPM;
 end
 
-%% plot tpm-circle for dark-light-laser diffs
 
-figure;
-tiledlayout(2,2, "TileSpacing","compact")
-set(gcf, "Position", [460 460 1020 840])
-% 1-3 : dark on-off
-% 2-4 : light on-off
-% 1-2 : dark-light off
-% 3-4 : dark-light on
-A=[1 2 1 3];
-B=[3 4 2 4];
-for c=1:4
-    a=A(c);
-    b=B(c);
-    nexttile
-    diffMat=results(a).TPM-results(b).TPM;
-    mytitle=sprintf('Difference TPM, %s - %s', results(a).condition_name, results(b).condition_name );
-    plot_tpm_diff_circle(diffMat, statenames, 'Title', mytitle)
-
-end
-
-
-
-
-
-%plot without clustering
-figure
-tiledlayout(1,2, "TileSpacing","compact")
-set(gcf, "Position", [440 440 1100 420])
-nexttile
-c=3; %dark laseroff
-hTPMdark_uc=heatmap(statenames, statenames, results(c).TPM, ...
-    'Title', sprintf('TPM %s, no clustering', results(c).condition_name), ...
-    'Colormap', parula, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
-xlabel('To State')
-ylabel('From State')
-
-nexttile
-c=4; %light laseroff
-hTPMdark_uc=heatmap(statenames, statenames, results(c).TPM, ...
-    'Title', sprintf('TPM %s, no clustering', results(c).condition_name), ...
-    'Colormap', parula, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
-xlabel('To State')
-ylabel('From State')
-colormap hot;
+% 
+% %plot without clustering
+% figure
+% tiledlayout(1,2, "TileSpacing","compact")
+% set(gcf, "Position", [440 440 1100 420])
+% nexttile
+% hTPMdark_uc=heatmap(statenames, statenames, TPMdark, ...
+%     'Title', ['TPM dark, no clustering'], ...
+%     'Colormap', parula, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
+% xlabel('To State')
+% ylabel('From State')
+% %hTPMdark_uc.YDisplayData = hTPMdark_uc.YData(1:6);
+% %hTPMdark_uc.XDisplayData = hTPMdark_uc.XData(1:6);
+% 
+% nexttile
+% hTPMlight_uc=heatmap(statenames, statenames, TPMlight, ...
+%     'Title', ['TPM light, no clustering'], ...
+%     'Colormap', parula, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
+% xlabel('To State')
+% ylabel('From State')
+% colormap hot;
+% % hTPMlight_uc.YDisplayData = hTPMlight_uc.YData(1:6);
+% % hTPMlight_uc.XDisplayData = hTPMlight_uc.XData(1:6);
 
 %set all clustered heatmaps to the dark-off order
 for c=1:4
@@ -492,16 +513,6 @@ for c=1:4
     title(sprintf('states/second diffs, %s - %s', results(a).condition_name, results(b).condition_name))
 end
 
-%plot bar graph of state rates for each condition
-for c=1:4
-    figure;
-    statespersec=results(c).statecounts*fps/(results(c).totalframes);
-    bh = bar((statenames), statespersec);
-    bh.FaceColor = 'flat';
-    ylabel('states/second')
-    title(sprintf('states/second, %s', results(c).condition_name))
-end
-
 figure
 bh = bar((statenames), [ results(1).statecounts; results(2).statecounts; results(3).statecounts; results(4).statecounts; ]);
 ylabel(' state counts ')
@@ -536,94 +547,17 @@ legend( results(1).condition_name, results(2).condition_name, results(3).conditi
 
 
 
-if 0
-%% save events and states to csv
 
-% Each eventframes list → its own CSV column (pad with NaN)
+%% ===== Helper functions =====
+function TPM = computeTPM(fromSeq, toSeq, nStates)
+    counts = computeCounts(fromSeq, toSeq, nStates);
+    TPM = counts ./ sum(counts,2);
+    TPM(isnan(TPM)) = 0;
+end
 
-    maxLen = max(cellfun(@numel, {...
-        cricket_jump_event_frames, ...
-        rangemin_event_frames, ...
-        contact_gain_event_frames, contact_loss_event_frames, ...
-        pause_start_frames, pause_end_frames, pause_durs, ...
-        wander_start_frames, wander_end_frames, ...
-        stalk_start_frames, stalk_end_frames, ...
-        approach_start_frames, approach_end_frames, ...
-        failed_approach_event_frames, ...
-        intercept_event_frames, ...
-        hotpursuit_start_frames, hotpursuit_end_frames, ...
-        chase_start_frames, chase_end_frames, ...
-        follow_start_frames, follow_end_frames, ...
-        noneoftheabove_start_frames, noneoftheabove_end_frames}));
-    pad = @(x) [x(:); NaN(maxLen - numel(x), 1)];
-    eventsTable = table(...
-        pad(cricket_jump_event_frames), ...
-        pad(rangemin_event_frames), ...
-        pad(contact_gain_event_frames),  ...
-        pad(contact_loss_event_frames), ...
-        pad(pause_start_frames),  ...
-        pad(pause_end_frames), ...
-        pad(wander_start_frames),  ...
-        pad(wander_end_frames), ...
-        pad(stalk_start_frames),  ...
-        pad(stalk_end_frames), ...
-        pad(approach_start_frames),  ...
-        pad(approach_end_frames), ...
-        pad(failed_approach_event_frames), ...
-        pad(intercept_event_frames), ...
-        pad(hotpursuit_start_frames),  ...
-        pad(hotpursuit_end_frames), ...
-        pad(chase_start_frames),  ...
-        pad(chase_end_frames), ...
-        pad(follow_start_frames),  ...
-        pad(follow_end_frames), ...
-        pad(noneoftheabove_start_frames) , ...
-        pad(noneoftheabove_end_frames), ...
-        'VariableNames', {
-        'cricket_jump_event_frames', ...
-        'rangemin_event_frames', ...
-        'contact_gain_event_frames',  ...
-        'contact_loss_event_frames', ...
-        'pause_start_frames',  ...
-        'pause_end_frames', ...
-        'wander_start_frames',  ...
-        'wander_end_frames', ...
-        'stalk_start_frames',  ...
-        'stalk_end_frames', ...
-        'approach_start_frames',  ...
-        'approach_end_frames', ...
-        'failed_approach_event_frames', ...
-        'intercept_event_frames', ...
-        'hotpursuit_start_frames',  ...
-        'hotpursuit_end_frames', ...
-        'chase_start_frames',  ...
-        'chase_end_frames', ...
-        'follow_start_frames',  ...
-        'follow_end_frames', ...
-        'noneoftheabove_start_frames' , ...
-        'noneoftheabove_end_frames'  });
-    writetable(eventsTable, '/Volumes/Projects/PreyCapture/ZIActivation/geo-trig-analysis-output/mike''s states and events/events.csv' );
-
-    % State logicals → one rectangular CSV
-    stateTable=table(contact(:),...
-        pause(:),...
-        wander(:),...
-        stalk(:),...
-        chase(:),...
-        follow(:),...
-        hotpursuit(:),...
-        approach(:),...
-        noneoftheabove(:), ...
-        'VariableNames', {
-        'contact',...
-        'pause',...
-        'wander',...
-        'stalk',...
-        'chase',...
-        'follow',...
-        'hotpursuit',...
-        'approach',...
-        'noneoftheabove', ...
-}    );
-    writetable(stateTable,    '/Volumes/Projects/PreyCapture/ZIActivation/geo-trig-analysis-output/mike''s states and events/states.csv');
+function counts = computeCounts(fromSeq, toSeq, nStates)
+    counts = zeros(nStates, nStates);
+    for k = 1:numel(fromSeq)
+        counts(fromSeq(k), toSeq(k)) = counts(fromSeq(k), toSeq(k)) + 1;
+    end
 end

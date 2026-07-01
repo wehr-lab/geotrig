@@ -14,12 +14,12 @@ statenames={ ...
 
 
 state_vec = NaN(N, 1);
-state_vec(hotpursuit) = 1;
-state_vec(chase) = 2;
-state_vec(follow) = 3;
-state_vec(stalk) = 4;
-state_vec(pause) = 5;
-state_vec(wander) = 6;
+state_vec(logical(hotpursuit)) = 1;
+state_vec(logical(chase)) = 2;
+state_vec(logical(follow)) = 3;
+state_vec(logical(stalk)) = 4;
+state_vec(logical(pause)) = 5;
+state_vec(logical(wander)) = 6;
 
 
 % 2. Create an event vector 'event_vec'
@@ -155,16 +155,16 @@ end
 %% plot effect of event on persistence
 
 
+win_start=-1; %in seconds
+win_stop=5;%in seconds
+window=win_start*200:win_stop*200;
 mean_persistence = nan(length(eventnames), length(window)); % 0 for reset, 1 for persist
 mean_persistence_dark_laserON=mean_persistence;
 mean_persistence_dark_laserOFF=mean_persistence;
 mean_persistence_light_laserON=mean_persistence;
 mean_persistence_light_laserOFF=mean_persistence;
-win_start=-1; %in seconds
-win_stop=5;%in seconds
-window=win_start*200:win_stop*200;
-chase_states = [1, 2, 3]; % Fast, Med, Slow
-search_states = [4, 5, 6]; % search
+chase_states = [1, 2, 3, 4]; % Fast, Med, Slow
+search_states = [ 5, 6]; % search
 
 init_states=chase_states; %condition on event occurring in one of these states
 init_states_label='chase';

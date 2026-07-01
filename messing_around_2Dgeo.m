@@ -25,6 +25,8 @@ rangemin_event_frames=detect_rangemin(range, metadata, localframe, filename);
 [stalk, stalk_start_frames, stalk_end_frames, stalk_durs]=detect_stalk(cricket_present, mouse_spd, cricket_spd, range, az);
 [approach, approach_start_frames, approach_end_frames, approach_durs, first_approach_frames]=detect_approach(cricket_present, mouse_spd, az);
 
+
+
 %thigmo is not in the dataframe in this dataroot
 
 Azimuthedges=linspace(0, 180, 50);
@@ -148,11 +150,11 @@ spdhist=histcounts(mouse_spd, Speededges);
 % Compute Spearman's correlation coefficient and p-value (on underlying
 % variables, not hists)
 [rhoAR, p_valAR] = corr(az(:), range(:), 'Type', 'Spearman', 'rows', 'pairwise')
-fprintf('\nAzimuth-Range: Spearman Rho: %.4f, P-value: %.4e\n', rhoAR, p_valAR);
+fprintf('\nAzimuth-Range: Spearman Rho: %.4f, P-value: %.4e (e%.2f)\n', rhoAR, p_valAR, log10(p_valAR));
 [rhoSA, p_valSA] = corr(mouse_spd(:), az(:), 'Type', 'Spearman', 'rows', 'pairwise')
-fprintf('\nSpeed-Azimuth: Spearman Rho: %.4f, P-value: %.4e\n', rhoSA, p_valSA);
+fprintf('\nSpeed-Azimuth: Spearman Rho: %.4f, P-value: %.4e (e%.2f)\n', rhoSA, p_valSA, log10(p_valSA));
 [rhoSR, p_valSR] = corr(mouse_spd(:), range(:), 'Type', 'Spearman', 'rows', 'pairwise')
-fprintf('\nSpeed-Range: Spearman Rho: %.4f, P-value: %.4e\n', rhoSR, p_valSR);
+fprintf('\nSpeed-Range: Spearman Rho: %.4f, P-value: %.4e (e%.2f)\n', rhoSR, p_valSR, log10(p_valSR));
 
 
 figure
@@ -931,6 +933,11 @@ thresholds.none.az=[0 0];
 thresholds.none.range=[0 0];
 thresholds.none.mouse_spd=[0 0];
 
+% dummy thresholds
+thresholds.hotpursuit.az=[0 0];
+thresholds.hotpursuit.range=[0 0];
+thresholds.hotpursuit.mouse_spd=[0 0];
+thresholds.follow=thresholds.hotpursuit;
 
 for statename=statenames
 
@@ -1686,7 +1693,7 @@ end
 %
 % loop through all states
 
-statenames={'chase', 'approach', 'wander', 'stalk',  'pause'};
+statenames={'hotpursuit', 'chase', 'follow', 'stalk', 'wander', 'pause'};
 for statename=statenames
 
     state=eval(statename{:});

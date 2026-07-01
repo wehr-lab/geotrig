@@ -100,6 +100,7 @@ for e = 1:nE
         glmResults(e).ci      = ci;
         glmResults(e).deviance = mdl.Deviance;
         glmResults(e).model   = mdl;
+        glmResults(e).featNames   = featNames;
 
         if opt.Plot
             nexttile; hold on;

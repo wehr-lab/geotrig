@@ -1,24 +1,32 @@
 [Warning: Name is nonexistent or not a directory:
 /Users/wehr/Documents/Analysis/visualize_tpm] 
 
- computing cross-intensity...0/61/62/63/64/65/66/6
- starting hawkes fit at 22-Jun-2026 16:45:46
- finished hawkes fit at 22-Jun-2026 17:51:42
- elapsed time: 01:05:55.63
+condition_name =
+
+    'light & ~laseron'
+
+Condition filter active: 2612372/9969821 frames retained (26.2%)
+Computing state-conditional event rates...
+ Fitting point process GLM...
+ Computing kernel-smoothed event rates...
+ Computing inter-event interval distributions...
+ Computing cross-intensity functions...
+
+ starting hawkes fit at 29-Jun-2026 17:16:35
+ finished hawkes fit at 29-Jun-2026 17:23:50
+ elapsed time: 00:07:14.80
 
 Hawkes fit summary:
-  NLL = 55270.13,  BIC = 111307.94
+  NLL = 12724.30,  BIC = 26107.29
   Baseline rates (events/s):
-    failed_approach: 0.0203
-    contact_loss: 0.0011
-    contact_gain: 0.0293
+    failed_approach: 0.0195
+    contact_loss: 0.0013
+    contact_gain: 0.0346
     intercept: 0.0001
-    cricket_jump: 0.0012
-    rangemin: 0.0025
+    cricket_jump: 0.0015
+    rangemin: 0.0020
 
-criticality: rho =0.7279
+criticality: rho =0.7569
 ρ(K) < 1 → the process is stationary; cascades die out
 ρ(K) = 1 → critical; cascades can persist indefinitely (unit root behavior)
-ρ(K) > 1 → explosive; the process is non-stationary
-printing 4 figures to ~/Documents/Analysis/geotrig/pp_analysis-figs-22-Jun-2026-17:51:44.pdf
-....done
+ρ(K) > 1 → explosive; the process is non-stationarydone

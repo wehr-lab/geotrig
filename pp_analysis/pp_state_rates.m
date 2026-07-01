@@ -10,6 +10,7 @@ function [stateRates, rateMat] = pp_state_rates(eventFrames, eventnames, ...
 
 p = inputParser;
 p.addParameter('Plot', true);
+p.addParameter('title', '');
 p.parse(varargin{:});
 opt = p.Results;
 
@@ -54,7 +55,7 @@ if opt.Plot
     colorbar; colormap(hot);
     set(gca,'XTick',1:nEvents,'XTickLabel',eventnames,'XTickLabelRotation',40,...
             'YTick',1:nStates,'YTickLabel',statenames,'TickLabelInterpreter','none');
-    title('Event rate (events/s) by state');
+    title(['Event rate (events/s) by state ', opt.title]);
     for s=1:nStates
         for e=1:nEvents
             text(e,s,sprintf('%.3f',rateMat(s,e)),'HorizontalAlignment','center',...
@@ -63,12 +64,13 @@ if opt.Plot
     end
 
     nexttile;
-    cmax = max(abs(log2(foldChange(:)+eps)));
+    cmin = min((log2(foldChange(:)+eps)));
+    cmax = max((log2(foldChange(:)+eps)));
     imagesc(log2(foldChange+eps), [-cmax cmax]);
     colorbar; colormap(gca, redblue_cmap());
     set(gca,'XTick',1:nEvents,'XTickLabel',eventnames,'XTickLabelRotation',40,...
             'YTick',1:nStates,'YTickLabel',statenames,'TickLabelInterpreter','none');
-    title('log_2 fold-change vs. overall rate  (red=enriched, blue=depleted)');
+    title(['log_2 fold-change vs. overall rate  (red=enriched, blue=depleted) ', opt.title]);
     for s=1:nStates
         for e=1:nEvents
             text(e,s,sprintf('%.1fx',foldChange(s,e)),'HorizontalAlignment','center',...

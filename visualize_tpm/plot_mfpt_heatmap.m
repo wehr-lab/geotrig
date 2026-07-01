@@ -44,6 +44,9 @@ function [MFPT, fig] = plot_mfpt_heatmap(P, stateNames, varargin)
     addRequired(p, 'P', @(x) ismatrix(x) && size(x,1)==size(x,2));
     addOptional(p, 'stateNames', {}, @iscell);
     addParameter(p, 'partition', [], @(x) isempty(x) || isvector(x));
+    addParameter(p, 'title', 'Mean First-Passage Time Matrix', @(x) ischar(x));
+        
+
     parse(p, P, stateNames, varargin{:});
 
     P = p.Results.P;
@@ -101,7 +104,8 @@ function [MFPT, fig] = plot_mfpt_heatmap(P, stateNames, varargin)
              'YTick', 1:N, 'YTickLabel', names_display);
     xlabel('To state j');
     ylabel('From state i');
-    title('Mean First-Passage Time Matrix');
+    title(['Mean First-Passage Time Matrix, ', p.Results.title]);
+
     axis square;
 
     % --- Overlay text values ---

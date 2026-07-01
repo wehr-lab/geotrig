@@ -6,7 +6,7 @@
 %    statenames : cell array of state name strings
 %    fps        : frames per second (for time axis labeling)
 % =============================================================
-TPM=TPMdark;
+TPM==results(3).TPM;
 % TPM=TPMlight;
 fps=200;
 

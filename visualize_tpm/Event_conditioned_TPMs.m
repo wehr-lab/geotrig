@@ -14,7 +14,6 @@
 % fancier.
 
 statenames = {'hot pursuit','chase','following','stalk','wander','pause'};
-%statenames = {'chase','stalk','wander','pause'};
 eventnames = {'failed_approach','contact_loss','contact_gain','intercept','cricket_jump', 'rangemin'};
 
 nStates = numel(statenames);
@@ -28,6 +27,23 @@ nEvents = numel(eventnames);
 
 stateMask = [    hotpursuit(:),chase(:),follow(:), stalk(:), wander(:), pause(:)];
 %stateMask = [  chase(:), stalk(:), wander(:), pause(:)];
+
+% c=3;
+%     if c==1
+%         condition=laseron & dark; condition_name{c}='dark laser on';
+%     elseif c==2
+%         condition=laseron & light; condition_name{c}='light laser on';
+%     elseif c==3
+%         condition=~laseron & dark; condition_name{c}='dark laser off';
+%     elseif c==4
+%         condition=~laseron & light; condition_name{c}='light laser off';
+%     end
+% 
+% 
+% stateMask = [    condition & hotpursuit(:), condition & chase(:), condition & follow(:),...
+%      condition & stalk(:),  condition & wander(:),  condition & pause(:)];
+
+
 size(stateMask)
 fps=200;
 
@@ -121,7 +137,7 @@ for e = 1:nEvents
         'YTick',1:nStates,'YTickLabel',rownames_star);
     title(sprintf('%s (n=%d, win=%d fr)', eventnames{e}, results(e).n_post_transitions, winFrames), 'interp', 'none');
 end
-sgtitle('TPM_{post-event} - TPM_{baseline}  (row = from-state, col = to-state), *=significant row-wise shifts (p<0.05)');
+sgtitle(['TPM_{post-event} - TPM_{baseline}  (row = from-state, col = to-state), *=significant row-wise shifts (p<0.05)', condition_name{c}]);
 
 
 
