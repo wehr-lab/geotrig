@@ -9,6 +9,7 @@ wander_speed_thresh=[2 15]; %[min max]  cm/s
 wander_range_thresh= 20; % min,  cm
 wander_az_thresh=30; %min, in degrees
 wander_winsize=1*200; %in frames (seconds*200fps)
+%wander_winsize=2*200; %in frames (seconds*200fps)
 min_wander_dur=.5*200; %in frames (seconds*200fps)
 
 

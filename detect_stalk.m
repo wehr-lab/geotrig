@@ -9,7 +9,8 @@ stalk_speed_thresh=[2 15]; %[min max]  cm/s
 stalk_range_thresh= [5 20]; % [min max],  cm
 stalk_az_thresh=30; %min, in degrees
 stalk_cspeed_thresh=1; % cricket speed min cm/s
-stalk_winsize=1*200; %in frames (seconds*200fps)
+ stalk_winsize=1*200; %in frames (seconds*200fps)
+% stalk_winsize=2*200; %in frames (seconds*200fps)
 min_stalk_dur=.5*200; %in frames (seconds*200fps)
 
 

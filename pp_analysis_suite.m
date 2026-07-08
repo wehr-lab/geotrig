@@ -13,9 +13,9 @@
 %
 % =========================================================================
 
-% /Applications/MATLAB_R2023b.app/bin/matlab  -nodisplay -nodesktop -sd /Users/wehr/Documents/Analysis/geotrig -batch "pp_analysis_suite" -logfile /Users/wehr/Documents/Analysis/geotrig/pplog.txt
+% /Applications/MATLAB_R2023b.app/bin/matlab  -nodisplay -nodesktop -sd /Users/wehr/Documents/Analysis/geotrig -batch "pp_analysis_suite" -logfile /Users/wehr/Documents/Analysis/geotrig/output/pplog.txt
 
-  % save /Users/wehr/Documents/Analysis/geotrig/datacache num_frames   failed_approach_event_frames  target_loss_event_frames contact_loss_event_frames  ...
+  % save /Users/wehr/Documents/Analysis/geotrig/output/datacache num_frames   failed_approach_event_frames  target_loss_event_frames contact_loss_event_frames  ...
   %     contact_gain_event_frames intercept_event_frames cricket_jump_event_frames rangemin_event_frames  ...
   %     hotpursuit chase follow stalk  wander  pause dark light laseron;
 
@@ -49,8 +49,8 @@ fps=200;
 
 % active_condition = dark & ~laseron;   % <-- change this: dark / light / laseron / laseroff / []
  % condition_name='dark & laseron'
- condition_name='light & laseron'
-% condition_name='dark & ~laseron'
+% condition_name='light & laseron'
+ condition_name='dark & ~laseron'
 % condition_name='light & ~laseron'
 active_condition=eval(condition_name);
 
@@ -119,7 +119,7 @@ if 1
     %run hawkes fit and similate, which are not run by pp_summary
 
     hawkes_params = pp_hawkes_fit(eventFrames, eventnames, num_frames, fps);
-    outfilename=sprintf('~/Documents/Analysis/geotrig/pp_analysis-output-%s.mat', replace(datestr(now), whitespacePattern, '-'));
+    outfilename=sprintf('~/Documents/Analysis/geotrig/output/pp_analysis-output-%s.mat', replace(datestr(now), whitespacePattern, '-'));
 
     save(outfilename, 'hawkes_params', 'condition_name')
     % duration=100; %seconds
@@ -135,7 +135,7 @@ end
  %print to pdf
  if 1
      f=findobj('type', 'figure');
-     pdffilename=sprintf('~/Documents/Analysis/geotrig/pp_analysis-figs-%s.pdf', replace(datestr(now), whitespacePattern, '-'));
+     pdffilename=sprintf('~/Documents/Analysis/geotrig/output/pp_analysis-figs-%s.pdf', replace(datestr(now), whitespacePattern, '-'));
      fprintf('\nprinting %d figures to %s\n', length(f), pdffilename)
      for idx=1:length(f)
          builtin('pause',.5)

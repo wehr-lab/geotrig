@@ -25,7 +25,7 @@ if 0
 
 end
 
-if 0
+if 1
 
     %% detect events
     cricket_jump_event_frames=detect_cricketjump(cricket_spd, metadata, localframe, filename);
@@ -39,8 +39,8 @@ if 0
     [approach, approach_start_frames, approach_end_frames, approach_durs, first_approach_frames]=detect_approach(cricket_present, mouse_spd, az);
     failed_approach_event_frames=detect_failed_approach(approach_end_frames, range);
     intercept_event_frames=detect_intercepts(approach_end_frames, range);
-    capture_frames=detect_capture(metadata, filename);
-    trial_durations=detect_trialdurs(metadata, filename);
+    %capture_frames=detect_capture(metadata, filename);
+    %trial_durations=detect_trialdurs(metadata, filename);
 
 end
 
@@ -365,6 +365,55 @@ set(gcf, "Position", [460 460 1020 840])
 % 3-4 : dark-light on
 A=[1 2 1 3];
 B=[3 4 2 4];
+for c=1:4
+    a=A(c);
+    b=B(c);
+    nexttile
+    diffMat=results(a).TPM-results(b).TPM;
+    mytitle=sprintf('Difference TPM, %s - %s', results(a).condition_name, results(b).condition_name );
+    plot_tpm_diff_circle(diffMat, statenames, 'Title', mytitle)
+
+end
+
+%%  repeat plot dark-light-laser diffs but with light-dark flipped
+
+figure;
+tiledlayout(2,2, "TileSpacing","compact")
+set(gcf, "Position", [460 460 1020 840])
+% 1-3 : dark on-off
+% 2-4 : light on-off
+% 1-2 : dark-light off
+% 3-4 : dark-light on
+A=[1 2 2 4];
+B=[3 4 1 3];
+for c=1:4
+    a=A(c);
+    b=B(c);
+    nexttile
+    hTPM=heatmap(statenames, statenames, results(a).TPM-results(b).TPM, ...
+        'Title', sprintf('Difference TPM, %s - %s', results(a).condition_name, results(b).condition_name ), ...
+        'Colormap', blue_to_red, 'GridVisible', 'off', 'CellLabelFormat', '%0.2g', 'CellLabelColor', 'none'); %'auto'
+    xlabel('To State')
+    ylabel('From State')
+    cl=clim;
+    clim(max(abs(cl))*[-1 1])
+    % cluster if desired:
+    % hTPM.YDisplayData = hTPM.YData(results(3).orderRows);
+    % hTPM.XDisplayData = hTPM.XData(results(3).orderCols);
+    H(c)=hTPM;
+end
+
+%% repeat plot  tpm-circle for dark-light-laser diffs but with light-dark flipped
+
+figure;
+tiledlayout(2,2, "TileSpacing","compact")
+set(gcf, "Position", [460 460 1020 840])
+% 1-3 : dark on-off
+% 2-4 : light on-off
+% 1-2 : dark-light off
+% 3-4 : dark-light on
+A=[1 2 2 4];
+B=[3 4 1 3];
 for c=1:4
     a=A(c);
     b=B(c);

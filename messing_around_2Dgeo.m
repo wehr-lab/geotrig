@@ -37,7 +37,7 @@ Speededges=linspace(0, 80, 50);
 tiledlayout(1,3, "TileSpacing","compact")
 nexttile
 histmat=histcounts2(az, range, Azimuthedges, Rangeedges);
-imagesc(Azimuthedges,Rangeedges,sqrt(histmat'));
+imagesc(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'));
 shading interp
 set(gca, 'ydir', 'norm')
 xlabel('Azimuth, degrees')
@@ -47,7 +47,7 @@ set(gcf, "Position", [440 880 1300 420 ])
 
 nexttile
 histmat=histcounts2(mouse_spd, range, Speededges, Rangeedges);
-imagesc(Rangeedges,Speededges,sqrt(histmat));
+imagesc(histx(Rangeedges),Speededges,sqrt(histmat));
 shading interp
 set(gca, 'ydir', 'norm')
 xlabel('Range, cm')
@@ -57,7 +57,7 @@ title('all frames')
 nexttile
 % histmat=histcounts2(mouse_spd, az, Speededges, Azimuthedges);
 histmat=histcounts2(mouse_spd, az, Speededges, Azimuthedges);
-imagesc(Azimuthedges,Speededges,sqrt(histmat));
+imagesc(histx(Azimuthedges),Speededges,sqrt(histmat));
 shading interp
 set(gca, 'ydir', 'norm')
 xlabel('Azimuth, degrees')
@@ -161,7 +161,7 @@ figure
 tiledlayout(3,4, "TileSpacing","compact")
 
 nexttile
-imagesc(Rangeedges, Azimuthedges,(histmatAR));
+imagesc(histx(Rangeedges), histx(Azimuthedges),(histmatAR));
 colorbar;
 title('hist');
 xlabel('Range');
@@ -179,7 +179,7 @@ residualsAR = histmatAR - expectedAR;
 
 % 4. Visualize the result
 nexttile
-imagesc(Rangeedges, Azimuthedges, residualsAR);
+imagesc(histx(Rangeedges), histx(Azimuthedges), residualsAR);
 colorbar;
 %title('Residual Plot (Observed - Expected)');
 title(sprintf('Residual Plot (Observed - Expected)\nAzimuth-Range: Spearman Rho: %.4f, P-value: %.4e\n', rhoAR, p_valAR))
@@ -188,7 +188,7 @@ ylabel('Azimuth');
 set(gca, 'ydir', 'norm')
 
 nexttile
-imagesc(Rangeedges, Azimuthedges, expectedAR);
+imagesc(histx(Rangeedges), histx(Azimuthedges), expectedAR);
 colorbar;
 title('Expected');
 xlabel('Range');
@@ -197,7 +197,7 @@ set(gca, 'ydir', 'norm')
 
 nexttile
 dependencyFactorAR = histmatAR ./ ((azhist(:) * rangehist(:)') / sum(histmatAR(:)));
-imagesc(Rangeedges, Azimuthedges, dependencyFactorAR);
+imagesc(histx(Rangeedges), histx(Azimuthedges), dependencyFactorAR);
 colorbar;
 clim([-1 3]); % Adjust limits to focus on the area around 1 (independence)
 set(gca, 'ydir', 'norm')
@@ -209,7 +209,7 @@ ylabel('Azimuth');
 % Speededges, Rangeedges
 
 nexttile
-imagesc(Rangeedges, Speededges,(histmatSR));
+imagesc(histx(Rangeedges), Speededges,(histmatSR));
 colorbar;
 title('hist');
 xlabel('Range');
@@ -227,7 +227,7 @@ residualsSR = histmatSR - expectedSR;
 
 % 4. Visualize the result
 nexttile
-imagesc(Rangeedges, Speededges, residualsSR);
+imagesc(histx(Rangeedges), Speededges, residualsSR);
 colorbar;
 % title('Residual Plot (Observed - Expected)');
 title(sprintf('Residual Plot (Observed - Expected)\nRange-Speed: Spearman Rho: %.4f, P-value: %.4e\n', rhoSR, p_valSR))
@@ -236,7 +236,7 @@ ylabel('Speed');
 set(gca, 'ydir', 'norm')
 
 nexttile
-imagesc(Rangeedges, Speededges, expectedSR);
+imagesc(histx(Rangeedges), Speededges, expectedSR);
 colorbar;
 title('Expected');
 xlabel('Range');
@@ -245,7 +245,7 @@ set(gca, 'ydir', 'norm')
 
 nexttile
 dependencyFactorSR = histmatSR ./ ((azhist(:) * rangehist(:)') / sum(histmatSR(:)));
-imagesc(Rangeedges, Speededges, dependencyFactorSR);
+imagesc(histx(Rangeedges), Speededges, dependencyFactorSR);
 colorbar;
 clim([-1 3]); % Adjust limits to focus on the area around 1 (independence)
 set(gca, 'ydir', 'norm')
@@ -256,7 +256,7 @@ ylabel('Speed');
 %%% Azimuthedges, Speededges
 
 nexttile
-imagesc(Azimuthedges, Speededges,(histmatSA));
+imagesc(histx(Azimuthedges), Speededges,(histmatSA));
 colorbar;
 title('hist');
 xlabel('Azimuth');
@@ -275,7 +275,7 @@ residualsSA = histmatSA - expectedSA;
 
 % 4. Visualize the result
 nexttile
-imagesc(Azimuthedges, Speededges, residualsSA);
+imagesc(histx(Azimuthedges), Speededges, residualsSA);
 colorbar;
 %title('Residual Plot (Observed - Expected)');
 title(sprintf('Residual Plot (Observed - Expected)\nSpeed-Azimuth: Spearman Rho: %.4f, P-value: %.4e\n', rhoSA, p_valSA))
@@ -284,7 +284,7 @@ ylabel('Speed');
 set(gca, 'ydir', 'norm')
 
 nexttile
-imagesc(Azimuthedges, Speededges, expectedSA);
+imagesc(histx(Azimuthedges), Speededges, expectedSA);
 colorbar;
 title('Expected');
 xlabel('Azimuth');
@@ -293,7 +293,7 @@ set(gca, 'ydir', 'norm')
 
 nexttile
 dependencyFactorSA = histmatSA ./ ((azhist(:) * rangehist(:)') / sum(histmatSA(:)));
-imagesc(Azimuthedges, Speededges, dependencyFactorSA);
+imagesc(histx(Azimuthedges), Speededges, dependencyFactorSA);
 colorbar;
 clim([-1 3]); % Adjust limits to focus on the area around 1 (independence)
 set(gca, 'ydir', 'norm')
@@ -353,7 +353,7 @@ hold on;
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Speededges, Rangeedges);
-pcolor(histx(Rangeedges), Speededges,sqrt(histmat));
+pcolor(histx(Rangeedges), histx(Speededges),sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Range, cm')
@@ -363,7 +363,7 @@ hold on;
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(dark.*cricket_moving)), az(logical(dark.*cricket_moving)), Speededges, Azimuthedges);
-pcolor(histx(Azimuthedges),Speededges,sqrt(histmat));
+pcolor(histx(Azimuthedges),histx(Speededges),sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -383,7 +383,7 @@ hold on;
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Speededges, Rangeedges);
-pcolor(histx(Rangeedges),Speededges,sqrt(histmat));
+pcolor(histx(Rangeedges),histx(Speededges),sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Range, cm')
@@ -393,7 +393,7 @@ hold on;
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(dark.*cricket_still)), az(logical(dark.*cricket_still)), Speededges, Azimuthedges);
-pcolor(histx(Azimuthedges),Speededges,sqrt(histmat));
+pcolor(histx(Azimuthedges),histx(Speededges),sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -413,7 +413,7 @@ hold on;
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Speededges, Rangeedges);
-pcolor(histx(Rangeedges),Speededges,sqrt(histmat));
+pcolor(histx(Rangeedges),histx(Speededges),sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Range, cm')
@@ -423,7 +423,7 @@ hold on;
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(light.*cricket_moving)), az(logical(light.*cricket_moving)), Speededges, Azimuthedges);
-pcolor(histx(Azimuthedges),Speededges,sqrt(histmat));
+pcolor(histx(Azimuthedges),histx(Speededges),sqrt(histmat));
 i=i+1;cl(i,:)=clim;
 shading interp
 xlabel('Azimuth, degrees')
@@ -492,71 +492,71 @@ lw2=2;
 lw=2;
 
 histmat=histcounts2(az(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Azimuthedges, Rangeedges);
-[~,c]=contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'm', 'LineWidth', lw);
+[~,c]=contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n, 'm', 'LineWidth', lw);
 % L=c.LevelList; %(this snippet is to use a fixed color scale across plots)
 % set(c, 'visible', 'off')
 % hold on
-% contour(Azimuthedges,Rangeedges,sqrt(histmat'), L(1)*[1 1],  'm', 'LineWidth', lw);
-% contour(Azimuthedges,Rangeedges,sqrt(histmat'), L(2)*[1 1],  'm', 'LineWidth', lw2);
+% contour(histx(Azimuthedges),Rangeedges,sqrt(histmat'), L(1)*[1 1],  'm', 'LineWidth', lw);
+% contour(histx(Azimuthedges),Rangeedges,sqrt(histmat'), L(2)*[1 1],  'm', 'LineWidth', lw2);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Azimuthedges, Rangeedges);
-[~,c]=contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
+[~,c]=contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'b', 'LineWidth', lw);
 title('dark')
 % set(c, 'visible', 'off')
-% contour(Azimuthedges,Rangeedges,sqrt(histmat'), c.LevelList(1)*[1 1],  'b', 'LineWidth', lw);
-% contour(Azimuthedges,Rangeedges,sqrt(histmat'), c.LevelList(2)*[1 1],  'b', 'LineWidth', lw2);
+% contour(histx(Azimuthedges),Rangeedges,sqrt(histmat'), c.LevelList(1)*[1 1],  'b', 'LineWidth', lw);
+% contour(histx(Azimuthedges),Rangeedges,sqrt(histmat'), c.LevelList(2)*[1 1],  'b', 'LineWidth', lw2);
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(dark.*cricket_moving)), range(logical(dark.*cricket_moving)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat), n, 'm', 'LineWidth', lw);
+contour(histx(Rangeedges),histx(Speededges),sqrt(histmat), n, 'm', 'LineWidth', lw);
 xlabel('Range, cm')
 ylabel('Speed, cm/s')
 hold on
 histmat=histcounts2(mouse_spd(logical(dark.*cricket_still)), range(logical(dark.*cricket_still)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
+contour(histx(Rangeedges),histx(Speededges),sqrt(histmat), n,  'b', 'LineWidth', lw);
 title('dark')
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(dark.*cricket_moving)), az(logical(dark.*cricket_moving)), Speededges, Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n, 'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Speededges),sqrt(histmat), n, 'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Speed, cm/s')
 hold on
 histmat=histcounts2(mouse_spd(logical(dark.*cricket_still)), az(logical(dark.*cricket_still)),Speededges,  Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Speededges),sqrt(histmat), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('dark')
 
 nexttile
 histmat=histcounts2(az(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n, 'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'b', 'LineWidth', lw);
 title('light')
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(light.*cricket_moving)), range(logical(light.*cricket_moving)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat), n, 'm', 'LineWidth', lw);
+contour(histx(Rangeedges),histx(Speededges),sqrt(histmat), n, 'm', 'LineWidth', lw);
 xlabel('Range, cm')
 ylabel('Speed, cm/s')
 hold on
 histmat=histcounts2(mouse_spd(logical(light.*cricket_still)), range(logical(light.*cricket_still)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
+contour(histx(Rangeedges),histx(Speededges),sqrt(histmat), n,  'b', 'LineWidth', lw);
 title('light')
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(light.*cricket_moving)), az(logical(light.*cricket_moving)), Speededges, Azimuthedges);
-contour(Azimuthedges, Speededges,sqrt(histmat), n, 'm', 'LineWidth', lw);
+contour(histx(Azimuthedges), histx(Speededges),sqrt(histmat), n, 'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Speed, cm/s')
 hold on
 histmat=histcounts2(mouse_spd(logical(light.*cricket_still)), az(logical(light.*cricket_still)),Speededges,  Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Speededges),sqrt(histmat), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('light')
 
@@ -577,67 +577,67 @@ n=1;
 lw=2;
 
 histmat=histcounts2(az(logical(cricket_moving.*chase)), range(logical(cricket_moving.*chase)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n, 'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(cricket_still.*chase)), range(logical(cricket_still.*chase)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n, 'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('chase')
 
 nexttile
 histmat=histcounts2(az(logical(cricket_moving.*approach)), range(logical(cricket_moving.*approach)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(cricket_still.*approach)), range(logical(cricket_still.*approach)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('approach')
 
 nexttile
 histmat=histcounts2(az(logical(cricket_moving.*pause)), range(logical(cricket_moving.*pause)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(cricket_still.*pause)), range(logical(cricket_still.*pause)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('pause')
 
 nexttile
 histmat=histcounts2(az(logical(cricket_moving.*wander)), range(logical(cricket_moving.*wander)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(cricket_still.*wander)), range(logical(cricket_still.*wander)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('wander')
 
 nexttile
 histmat=histcounts2(az(logical(cricket_moving(rangemin_event_frames))), range(logical(cricket_moving(rangemin_event_frames))), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(cricket_still(rangemin_event_frames))), range(logical(cricket_still(rangemin_event_frames))), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('rangemin')
 
 nexttile
 histmat=histcounts2(az(logical(cricket_moving(cricket_jump_event_frames))), range(logical(cricket_moving(cricket_jump_event_frames))), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'm', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(cricket_still(cricket_jump_event_frames))), range(logical(cricket_still(cricket_jump_event_frames))), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'b', 'LineWidth', lw);
 legend('cricket moving','cricket still')
 title('cricket jump')
 
@@ -791,7 +791,7 @@ if 0 %create movie
     close(v);
     disp(['Movie saved successfully as: ', video_filename]);
 end
-if 1 %create gif version of movie
+if 0 %create gif version of movie
  
     gif_filename = '3d_cricketmoving.gif';
     delay_time = 1/30; % Matches a 30 FPS playback speed
@@ -1283,102 +1283,102 @@ n=1;
 lw=2;
 
 histmat=histcounts2(az(logical(dark.*chase)), range(logical(dark.*chase)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'r', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n, 'r', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(dark.*approach)), range(logical(dark.*approach)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'm', 'LineWidth', lw);
 histmat=histcounts2(az(logical(dark.*pause)), range(logical(dark.*pause)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'b', 'LineWidth', lw);
 histmat=histcounts2(az(logical(dark.*wander)), range(logical(dark.*wander)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'g', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'g', 'LineWidth', lw);
 histmat=histcounts2(az(logical(dark(rangemin_event_frames))), range(logical(dark(rangemin_event_frames))), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'c', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('dark')
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(dark.*chase)), range(logical(dark.*chase)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges, sqrt(histmat), n, 'r', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges, sqrt(histmat), n, 'r', 'LineWidth', lw);
 xlabel('Range, cm')
 ylabel('Speed, cm/s')
 hold on
 histmat=histcounts2(mouse_spd(logical(dark.*approach)), range(logical(dark.*approach)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n,  'm', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n,  'm', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(dark.*pause)), range(logical(dark.*pause)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n,  'b', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n,  'b', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(dark.*wander)), range(logical(dark.*wander)), Speededges, Rangeedges);
-contour(Rangeedges, Speededges, sqrt(histmat), n,  'g', 'LineWidth', lw);
+contour(histx(Rangeedges), Speededges, sqrt(histmat), n,  'g', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(dark(rangemin_event_frames))), range(logical(dark(rangemin_event_frames))), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('dark')
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(dark.*chase)), az(logical(dark.*chase)), Speededges, Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n, 'r', 'LineWidth', lw);
+contour(histx(Azimuthedges),Speededges,sqrt(histmat), n, 'r', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Speed, cm/s')
 hold on
 histmat=histcounts2(mouse_spd(logical(dark.*approach)), az(logical(dark.*approach)),Speededges,  Azimuthedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n,  'm', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n,  'm', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(dark.*pause)), az(logical(dark.*pause)), Speededges, Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(dark.*wander)), az(logical(dark.*wander)), Speededges, Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n,  'g', 'LineWidth', lw);
+contour(histx(Azimuthedges),Speededges,sqrt(histmat), n,  'g', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(dark(rangemin_event_frames))), az(logical(dark(rangemin_event_frames))), Speededges, Azimuthedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('dark')
 
 nexttile
 histmat=histcounts2(az(logical(light.*chase)), range(logical(light.*chase)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n, 'r', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n, 'r', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Range, cm')
 hold on
 histmat=histcounts2(az(logical(light.*approach)), range(logical(light.*approach)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'm', 'LineWidth', lw);
 histmat=histcounts2(az(logical(light.*pause)), range(logical(light.*pause)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'b', 'LineWidth', lw);
 histmat=histcounts2(az(logical(light.*wander)), range(logical(light.*wander)), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'g', 'LineWidth', lw);
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'g', 'LineWidth', lw);
 histmat=histcounts2(az(logical(light(rangemin_event_frames))), range(logical(light(rangemin_event_frames))), Azimuthedges, Rangeedges);
-contour(Azimuthedges,Rangeedges,sqrt(histmat'), n,  'c', 'LineWidth', lw);legend('chase', 'approach', 'pause', 'wander',  'rangemin')
+contour(histx(Azimuthedges),histx(Rangeedges),sqrt(histmat'), n,  'c', 'LineWidth', lw);legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('light')
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(light.*chase)), range(logical(light.*chase)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n, 'r', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n, 'r', 'LineWidth', lw);
 xlabel('Range, cm')
 ylabel('Speed, cm/s')
 hold on
 histmat=histcounts2(mouse_spd(logical(light.*approach)), range(logical(light.*approach)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n,  'm', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n,  'm', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(light.*pause)), range(logical(light.*pause)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n,  'b', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n,  'b', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(light.*wander)), range(logical(light.*wander)), Speededges, Rangeedges);
-contour(Rangeedges,Speededges, sqrt(histmat), n,  'g', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges, sqrt(histmat), n,  'g', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(light(rangemin_event_frames))), range(logical(light(rangemin_event_frames))), Speededges, Rangeedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('light')
 
 nexttile
 histmat=histcounts2(mouse_spd(logical(light.*chase)), az(logical(light.*chase)), Speededges, Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n, 'r', 'LineWidth', lw);
+contour(histx(Azimuthedges),Speededges,sqrt(histmat), n, 'r', 'LineWidth', lw);
 xlabel('Azimuth, degrees')
 ylabel('Speed, cm/s')
 hold on
 histmat=histcounts2(mouse_spd(logical(light.*approach)), az(logical(light.*approach)), Speededges, Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n,  'm', 'LineWidth', lw);
+contour(histx(Azimuthedges),Speededges,sqrt(histmat), n,  'm', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(light.*pause)), az(logical(light.*pause)), Speededges, Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
+contour(histx(Azimuthedges),Speededges,sqrt(histmat), n,  'b', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(light.*wander)), az(logical(light.*wander)), Speededges, Azimuthedges);
-contour(Azimuthedges,Speededges,sqrt(histmat), n,  'g', 'LineWidth', lw);
+contour(histx(Azimuthedges),Speededges,sqrt(histmat), n,  'g', 'LineWidth', lw);
 histmat=histcounts2(mouse_spd(logical(light(rangemin_event_frames))), az(logical(light(rangemin_event_frames))), Speededges, Azimuthedges);
-contour(Rangeedges,Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
+contour(histx(Rangeedges),Speededges,sqrt(histmat) , n,  'c', 'LineWidth', lw);
 legend('chase', 'approach', 'pause', 'wander',  'rangemin')
 title('light')
 

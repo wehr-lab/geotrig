@@ -68,7 +68,7 @@ stateMask = logical([hotpursuit(:), chase(:), follow(:), stalk(:), wander(:), pa
 % Mask columns of stateMask so out-of-condition frames become NOTA.
 % Uncomment one block and set condition / condition_name before running.
 %
-% c = 4; %set outside in a script, for now
+ c = 3; %set outside in a script, for now
 if     c==1; condition = laseron &  dark;  condition_name = 'dark laser on';
 elseif c==2; condition = laseron & ~dark;  condition_name = 'light laser on';
 elseif c==3; condition = ~laseron &  dark; condition_name = 'dark laser off';
@@ -108,7 +108,8 @@ eventFrames = { ...
 };
 
 % ── Parameters ───────────────────────────────────────────────────────────────
-winFrames = 5 * fps;
+post_event_window_sec = 2;
+winFrames = post_event_window_sec*fps;   % post-event window length (e.g. 1 s at 30 fps) -- adjust as needed
 
 % ── Transition pairs ─────────────────────────────────────────────────────────
 fromSeq = stateSeq(1:end-1);
@@ -232,11 +233,19 @@ for e = 1:nEvents
     subplot(2,3,e)
     diffMat = results(e).TPM_post - results(e).TPM_baseline_excl;
     plot_tpm_diff_circle(diffMat, statenames, ...
-        'Title', sprintf('%s (n=%d)', eventnames{e}, results(e).n_post_transitions), ...
+        'Title', sprintf('%s (n=%d) %s, win=%ds', eventnames{e}, results(e).n_post_transitions, condition_name,post_event_window_sec), ...
         'MinAbsDiff', 0.001);
 end
 sgtitle(sprintf('TPM_{post} - TPM_{base}  [%s]', ...
     condition_name));
+
+%plot a single figure panel for failed approach
+figure
+e=1;
+diffMat = results(e).TPM_post - results(e).TPM_baseline_excl;
+plot_tpm_diff_circle(diffMat, statenames, ...
+    'Title', sprintf('TPMpost - TPMbaseline\n%s (n=%d) %s, win=%ds', eventnames{e}, results(e).n_post_transitions, condition_name, post_event_window_sec), ...
+    'MinAbsDiff', 0.001);
 
 
 %% ===== Helper functions =====================================================

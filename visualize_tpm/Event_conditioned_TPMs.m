@@ -28,20 +28,20 @@ nEvents = numel(eventnames);
 stateMask = [    hotpursuit(:),chase(:),follow(:), stalk(:), wander(:), pause(:)];
 %stateMask = [  chase(:), stalk(:), wander(:), pause(:)];
 
-% c=3;
-%     if c==1
-%         condition=laseron & dark; condition_name{c}='dark laser on';
-%     elseif c==2
-%         condition=laseron & light; condition_name{c}='light laser on';
-%     elseif c==3
-%         condition=~laseron & dark; condition_name{c}='dark laser off';
-%     elseif c==4
-%         condition=~laseron & light; condition_name{c}='light laser off';
-%     end
-% 
-% 
-% stateMask = [    condition & hotpursuit(:), condition & chase(:), condition & follow(:),...
-%      condition & stalk(:),  condition & wander(:),  condition & pause(:)];
+c=3;
+    if c==1
+        condition=laseron & dark; condition_name{c}='dark laser on';
+    elseif c==2
+        condition=laseron & light; condition_name{c}='light laser on';
+    elseif c==3
+        condition=~laseron & dark; condition_name{c}='dark laser off';
+    elseif c==4
+        condition=~laseron & light; condition_name{c}='light laser off';
+    end
+
+
+stateMask = [    condition & hotpursuit(:), condition & chase(:), condition & follow(:),...
+     condition & stalk(:),  condition & wander(:),  condition & pause(:)];
 
 
 size(stateMask)
@@ -57,7 +57,8 @@ eventFrames={...
     };
 
 % --- Parameters ---
-winFrames = 5*fps;   % post-event window length (e.g. 1 s at 30 fps) -- adjust as needed
+post_event_window_sec = 2;
+winFrames = post_event_window_sec*fps;   % post-event window length (e.g. 1 s at 30 fps) -- adjust as needed
 
 num_frames = size(stateMask,1);
 
@@ -70,8 +71,9 @@ stateSeq(~any(stateMask,2)) = 0;
 % Transitions occur between frame t and t+1
 fromSeq = stateSeq(1:end-1);
 toSeq   = stateSeq(2:end);
-validTrans = fromSeq>0 & toSeq>0;  % exclude frames where no state active
+% validTrans = fromSeq>0 & toSeq>0;  % exclude frames where no state active
 %note that this excludes transitions to/from "none of the above"
+validTrans = fromSeq>0 & toSeq>0 & (fromSeq ~= toSeq);  % exclude frames where no state active AND exclude self-transitions
 
 % Baseline TPM (all valid transitions)
 TPM_baseline = computeTPM(fromSeq(validTrans), toSeq(validTrans), nStates);
@@ -170,7 +172,7 @@ for e = 1:nEvents
     subplot(2,3,e)
     diffMat = results(e).TPM_post - results(e).TPM_baseline_excl;
     plot_tpm_diff_circle(diffMat, statenames, ...
-        'Title', sprintf('%s (n=%d)', eventnames{e}, results(e).n_post_transitions), ...
+        'Title', sprintf('%s (n=%d) %s, win=%ds', eventnames{e}, results(e).n_post_transitions, condition_name{c},post_event_window_sec), ...
         'MinAbsDiff', 0.001);
 end
 

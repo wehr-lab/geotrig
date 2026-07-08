@@ -11,6 +11,7 @@ function [chase, chase_start_frames, chase_end_frames, chase_durs]=detect_varcha
 
 % params:
 chase_winsize=.25*200; %in frames (seconds*200fps)
+%chase_winsize=2*200; %in frames (seconds*200fps)
 min_chase_dur=.1*200; %in frames (seconds*200fps)
 
 
