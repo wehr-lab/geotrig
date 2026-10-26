@@ -22,10 +22,9 @@
 %% 0. ASSUMED INPUTS (frame-level, all Nx1, same length) ---------------------
 % z, trial_id, animal_id, state_id, dark, laser_on : as used throughout
 % fs : frame rate
-fs=fps;
-laser_on=laseron;
 
 set(groot, 'defaultAxesFontSize', 18);
+light = ~dark;   % convenience flag, used by Run 3 below
 
 %% Shared bin edges, computed ONCE from all valid frames -----------------
 % Using one shared grid (rather than each run picking its own bins from its
@@ -48,13 +47,22 @@ laserResults = local_runLocalizedEffectAnalysis(z, trial_id, animal_id, state_id
 darkResults = local_runLocalizedEffectAnalysis(z, trial_id, animal_id, state_id, fs, ...
     ~laser_on, 'laser-off trials', dark, {'light','dark'}, 'Dark', sharedEdges);
 
+%% Run 3: laser effect, within light trials -----------------------------------
+laserLightResults = local_runLocalizedEffectAnalysis(z, trial_id, animal_id, state_id, fs, ...
+    light, 'light trials', laser_on, {'laser_off','laser_on'}, 'LaserOn', sharedEdges);
+
 %% =========================================================================
-%  PART 3 -- TESTING THE MIRROR HYPOTHESIS
-%  H: LaserOn effect (in dark) ~= Light-vs-Dark effect (laser off)
-%     = -1 * (Dark-vs-Light effect), since "dark" was the printed contrast
+%  PART 3 -- TESTING THE MIRROR HYPOTHESIS, AND LASER CONSISTENCY ACROSS LIGHT
+%  3a. H1: LaserOn effect (in dark) ~= Light-vs-Dark effect (laser off)
+%      = -1 * (Dark-vs-Light effect), since "dark" was the printed contrast
+%  3b. H2: LaserOn effect (in dark) == LaserOn effect (in light) -- i.e. does
+%      the laser's own effect on drift depend on lighting condition? This is
+%      the localized, per-bin version of the Dark*LaserOn interaction term
+%      from the global OU model, which was never directly tested at the
+%      binned level.
 % =========================================================================
 fprintf('\n########################################################\n');
-fprintf('### Testing mirror hypothesis: laser-on (dark) vs light-vs-dark (laser off)\n');
+fprintf('### 3a. Mirror hypothesis: laser-on (dark) vs light-vs-dark (laser off)\n');
 fprintf('########################################################\n');
 
 laserBeta = laserResults.beta;      % effect of laser-on, per bin, in dark
@@ -104,6 +112,59 @@ for b = 1:numel(binCenters)
 end
 xlabel('light-vs-dark beta', 'FontSize', 18); ylabel('laser-on beta', 'FontSize', 18);
 title(sprintf('r = %.2f, p = %.3g', rho, pRho), 'FontSize', 18);
+legend('Location','best', 'FontSize', 18); grid on; axis equal;
+
+%% --- 3b. Is the laser effect itself consistent across lighting? -----------
+fprintf('\n########################################################\n');
+fprintf('### 3b. Laser effect consistency: laser-on (dark) vs laser-on (light)\n');
+fprintf('########################################################\n');
+
+laserDarkBeta  = laserResults.beta;       SE_laserDark  = laserResults.SE;
+laserLightBeta = laserLightResults.beta;  SE_laserLight = laserLightResults.SE;
+% binCenters already defined above from laserResults; same grid by construction
+
+fprintf('\n  %-6s %-8s %-16s %-16s %-14s\n', 'bin', 'z', 'laser beta (dark)', 'laser beta (light)', 'diff (z-test)');
+diffZ_laser = nan(size(binCenters)); diffP_laser = nan(size(binCenters));
+for b = 1:numel(binCenters)
+    if isnan(laserDarkBeta(b)) || isnan(laserLightBeta(b)), continue; end
+    d = laserDarkBeta(b) - laserLightBeta(b);
+    seD = sqrt(SE_laserDark(b)^2 + SE_laserLight(b)^2);
+    diffZ_laser(b) = d / seD;
+    diffP_laser(b) = 2*(1 - normcdf(abs(diffZ_laser(b))));
+    fprintf('  %-6d %-8.2f %-16.4f %-16.4f z=%.2f, p=%.4g\n', ...
+        b, binCenters(b), laserDarkBeta(b), laserLightBeta(b), diffZ_laser(b), diffP_laser(b));
+end
+
+validBothLaser = ~isnan(laserDarkBeta) & ~isnan(laserLightBeta);
+[rhoLaser, pRhoLaser] = corr(laserDarkBeta(validBothLaser), laserLightBeta(validBothLaser), 'Type', 'Pearson');
+fprintf('\n  Cross-bin correlation (laser-in-dark beta vs laser-in-light beta): r = %.3f, p = %.4g (n = %d bins)\n', ...
+    rhoLaser, pRhoLaser, nnz(validBothLaser));
+fprintf('  If the laser effect is INDEPENDENT of lighting: expect r close to +1, similar\n');
+fprintf('  magnitude, and few/no bins with a significant diff (z-test) above -- i.e. the\n');
+fprintf('  laser does the same thing whether the room is dark or light.\n');
+fprintf('  A weak r or significant per-bin differences would mean lighting condition\n');
+fprintf('  modulates the laser''s own effect (an interaction), not just an additive one.\n');
+
+figure('Name', 'Laser effect consistency: dark vs light trials');
+subplot(1,2,1); hold on;
+plot(binCenters, laserDarkBeta, '-o', 'DisplayName', 'laser-on effect (dark)');
+plot(binCenters, laserLightBeta, '-o', 'DisplayName', 'laser-on effect (light)');
+yline(0, '--k', 'HandleVisibility','off');
+xlabel('z (engagement axis)', 'FontSize', 18); ylabel('per-bin drift beta', 'FontSize', 18);
+title('Laser effect: dark vs light trials', 'FontSize', 18);
+legend('Location','best', 'FontSize', 18); grid on;
+
+subplot(1,2,2); hold on;
+scatter(laserLightBeta, laserDarkBeta, 60, 'filled');
+limsLaser = [min([laserDarkBeta;laserLightBeta],[],'omitnan'), max([laserDarkBeta;laserLightBeta],[],'omitnan')];
+plot(limsLaser, limsLaser, '--k', 'DisplayName', 'perfect consistency (y=x)');
+for b = 1:numel(binCenters)
+    if validBothLaser(b)
+        text(laserLightBeta(b), laserDarkBeta(b), sprintf(' %d', b), 'FontSize', 18);
+    end
+end
+xlabel('laser-on beta (light)', 'FontSize', 18); ylabel('laser-on beta (dark)', 'FontSize', 18);
+title(sprintf('r = %.2f, p = %.3g', rhoLaser, pRhoLaser), 'FontSize', 18);
 legend('Location','best', 'FontSize', 18); grid on; axis equal;
 
 %% =========================================================================

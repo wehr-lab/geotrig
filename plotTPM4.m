@@ -36,10 +36,11 @@ if 0
     cricket_present=get_cricket_present_frames(metadata, localframe, num_geoframes, filename);
     [lightdark light dark] = get_lightdark(filename, localframe, num_geoframes, metadata);
     [laseron] = get_laseron(filename, localframe, num_geoframes, metadata);
+    fps=200;
 
 end
 
-if 0
+if 1
 
     %% detect events
     cricket_jump_event_frames=detect_cricketjump(cricket_spd, metadata, localframe, filename);
@@ -61,7 +62,7 @@ end
 %% detect chase states by passing thresholds to detect_varchase
 
 azvalues=[0 30];
-rangevalues_hotpursuit = [0 20];
+rangevalues_hotpursuit = [5 20];
 rangevalues_chase = [5 20];
 rangevalues_follow = [5 20];
 speedvalues_hotpursuit = [25 100];

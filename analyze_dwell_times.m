@@ -9,10 +9,9 @@
 %  Motivation: occupancy (fraction of TIME in a state) can shift even when
 %  local drift near that state shows little effect, if the underlying
 %  change is in how LONG each visit lasts (dwell time) or how the chain is
-%  routed into/out of the state (see the difference-TPM analyses) rather
-%  than in local velocity. This was flagged as the natural way to resolve
-%  the open question of why dark reduces pause occupancy without a strong
-%  local drift signature there.
+%  routed into/out of the state, rather than in local velocity. This was
+%  flagged as the natural way to resolve the open question of why dark
+%  reduces pause occupancy without a strong local drift signature there.
 % =========================================================================
 
 %% 0. ASSUMED INPUTS (frame-level, all Nx1, same length) ---------------------
@@ -160,20 +159,52 @@ end
 
 %% =========================================================================
 %  4. DIFFERENCE SUMMARY PLOT
-%% =========================================================================
+%  Bonferroni correction applied across the full family of tests shown in
+%  this figure (6 states x 4 contrasts = 24 tests), since all 24 are being
+%  visualized and interpreted together as one figure's worth of claims.
+%  Bars are colored by direction (red = longer dwell time, blue = shorter),
+%  with a '*' above bars that survive the Bonferroni-corrected threshold.
+% =========================================================================
+nTestsTotal = 6 * nContrasts;
+bonferroniAlpha = 0.05 / nTestsTotal;
+% bonferroniAlpha = 0.05 / 6;
+fprintf('\nBonferroni-corrected alpha across all %d tests: %.5f\n', nTestsTotal, bonferroniAlpha);
+
+colorPos = [0.80 0.20 0.20];   % red  -- longer dwell time
+colorNeg = [0.20 0.40 0.80];   % blue -- shorter dwell time
+
 figure('Name', 'Dwell-time percent change by contrast');
 for cx = 1:nContrasts
     subplot(2,2,cx); hold on;
+
     err = [pctChange(:,cx) - pctChangeLo(:,cx), pctChangeHi(:,cx) - pctChange(:,cx)];
-    b = bar(1:6, pctChange(:,cx));
+
+    barColors = repmat([0.6 0.6 0.6], 6, 1);   % default gray, for any NaN/untested bars
+    isPos = pctChange(:,cx) > 0;
+    isNeg = pctChange(:,cx) < 0;
+    barColors(isPos,:) = repmat(colorPos, nnz(isPos), 1);
+    barColors(isNeg,:) = repmat(colorNeg, nnz(isNeg), 1);
+
+    b = bar(1:6, pctChange(:,cx), 'FaceColor', 'flat');
+    b.CData = barColors;
     errorbar(1:6, pctChange(:,cx), err(:,1), err(:,2), 'k.', 'LineWidth', 1.5, 'CapSize', 8);
     yline(0, '--k', 'HandleVisibility','off');
+
+    isSig = pValue(:,cx) < bonferroniAlpha;
+    for s = 1:6
+        if isSig(s)
+            yPos = pctChangeHi(s,cx) + 0.06*(max(ylim)-min(ylim));
+            text(s, yPos, '*', 'FontSize', 24, 'HorizontalAlignment', 'center', ...
+                'FontWeight', 'bold');
+        end
+    end
+
     set(gca, 'XTick', 1:6, 'XTickLabel', statenames, 'XTickLabelRotation', 30);
     ylabel('% change in dwell time', 'FontSize', 18);
     title(contrasts(cx).name, 'FontSize', 18);
     grid on;
 end
-sgtitle('Dwell-time percent change, with 95% CI, across the four contrasts', 'FontSize', 18);
+sgtitle(sprintf('Dwell-time %% change, 95%% CI, * = p < %.5f (Bonferroni, n=%d tests)', ...
+    bonferroniAlpha, nTestsTotal), 'FontSize', 18);
 
 fprintf('\nDone.\n');
-
